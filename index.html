@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14130f">
+  <title>el pequeño networker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inknut+Antiqua:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- nombre de zona gigante, detrás de todo -->
+  <div class="zone-label" id="zone-label">el bosque oscuro</div>
+
+  <!-- línea superior discreta (no es un header) -->
+  <div class="topquiet">
+    <span class="ev" id="ev">sónar+d 2026 · 18–19 juny</span>
+    <span class="ctrls">
+      <button data-action="textdown" aria-label="texto más pequeño">a−</button>
+      <button data-action="textup" aria-label="texto más grande">a+</button>
+      <button data-action="mute" id="mute" aria-label="silenciar">son.</button>
+    </span>
+  </div>
+
+  <!-- la app (oculta hasta encender el personaje) -->
+  <main id="app" hidden>
+    <section class="principal" id="principal"></section>
+    <section class="hilo" id="hilo"></section>
+    <section class="rep" id="rep"></section>
+    <section class="servilleta" id="servilleta"></section>
+    <section class="sellos-sec" id="sellos"></section>
+    <section class="loot" id="loot"></section>
+  </main>
+
+  <!-- pantalla de entrada: la máscara = el permiso -->
+  <section class="entry" id="entry">
+    <div class="wrap">
+      <p class="manifesto" id="entry-manifesto"></p>
+      <p class="flag" id="entry-flag"></p>
+      <p class="rules" id="entry-rules"></p>
+      <div class="cta">
+        <button class="btn primary" data-action="light" id="light-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- turn-ins: avisos secos, sin emoji -->
+  <div class="turnins" id="turnins" aria-live="polite"></div>
+
+  <script src="events/sonar.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

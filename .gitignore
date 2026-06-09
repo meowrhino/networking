@@ -1,0 +1,9 @@
+# sistema
+.DS_Store
+
+# tooling local (no hace falta online)
+.claude/
+
+# notas personales — fuera del repo público
+docs/
+investigacion networking game.md
