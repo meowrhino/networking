@@ -12,8 +12,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- nombre de zona gigante, detrás de todo -->
-  <div class="zone-label" id="zone-label">el bosque oscuro</div>
+  <!-- nombre grande, detrás de todo -->
+  <div class="zone-label" id="zone-label">sónar+d</div>
 
   <!-- línea superior discreta (no es un header) -->
   <div class="topquiet">
@@ -25,29 +25,16 @@
     </span>
   </div>
 
-  <!-- la app (oculta hasta encender el personaje) -->
-  <main id="app" hidden>
-    <section class="principal" id="principal"></section>
-    <section class="hilo" id="hilo"></section>
-    <section class="rep" id="rep"></section>
+  <main id="app">
+    <section class="marcador" id="marcador"></section>
+    <section class="convo" id="convo"></section>
+    <section class="tipos" id="tipos"></section>
     <section class="servilleta" id="servilleta"></section>
     <section class="sellos-sec" id="sellos"></section>
     <section class="loot" id="loot"></section>
   </main>
 
-  <!-- pantalla de entrada: la máscara = el permiso -->
-  <section class="entry" id="entry">
-    <div class="wrap">
-      <p class="manifesto" id="entry-manifesto"></p>
-      <p class="flag" id="entry-flag"></p>
-      <p class="rules" id="entry-rules"></p>
-      <div class="cta">
-        <button class="btn primary" data-action="light" id="light-btn"></button>
-      </div>
-    </div>
-  </section>
-
-  <!-- turn-ins: avisos secos, sin emoji -->
+  <!-- avisos cortos -->
   <div class="turnins" id="turnins" aria-live="polite"></div>
 
   <script src="events/sonar.js"></script>

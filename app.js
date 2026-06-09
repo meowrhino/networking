@@ -1,30 +1,29 @@
 /* ============================================================
-   el pequeño networker — lógica · v2 (vanilla, sin build)
-   campaña de festival (sin reset) · reputación que solo sube ·
-   el intento es el turn-in · color que se gana · voz cláusula.
+   el pequeño networker — lógica · v3 (literal, sin jerga)
+   herramienta para consultar y recordarte que hagas networking.
+   campaña de todo el finde (sin reset) · el progreso solo sube.
    ============================================================ */
 
 'use strict';
 
 const EVENT = EVENT_SONAR;          // de events/sonar.js
-const KEY = 'epn_state_v2';
+const KEY = 'epn_state_v3';
 const VOLUME = 0.16;
 
 /* ---------- estado ---------- */
 function defaultState() {
   return {
-    version: 2,
+    version: 3,
     eventId: EVENT.id,
-    lit: false,                     // ¿personaje encendido?
-    hogueras: 0,                    // contactos que valen (meta 3)
-    hilosClosed: 0,                 // acercamientos cerrados (meta ~8)
-    rep: { jardin: 0, bosque: 0, caminantes: 0 },  // solo sube
-    thread: null,                   // { step:1..4, faction:null, used:[] }
-    servilleta: 0,                  // 0..3 pasos hechos
-    cards: 0,                       // tarjetas co-creadas
+    buenos: 0,                      // buenos contactos (meta 3)
+    convos: 0,                      // conversaciones cerradas (meta ~8)
+    rep: { colab: 0, cliente: 0, nope: 0 },   // solo sube
+    thread: null,                   // { step:1..4, tipo:null, used:[] }
+    servilleta: 0,                  // 0..3
+    cards: 0,                       // tarjetas hechas juntos
     nightClaimed: false,
     muted: false,
-    fontStep: 0,                    // -2..+3 escala de texto
+    fontStep: 0,
   };
 }
 
@@ -33,7 +32,7 @@ function loadState() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const s = JSON.parse(raw);
-      if (s && s.version === 2 && s.eventId === EVENT.id) return s;
+      if (s && s.version === 3 && s.eventId === EVENT.id) return s;
     }
   } catch (e) { console.warn('estado ilegible:', e); }
   return defaultState();
@@ -44,7 +43,7 @@ function save() {
 }
 let state = loadState();
 
-// reset oculto, solo para pruebas (la campaña NO se reinicia desde la ui)
+// reset solo para pruebas (no se reinicia desde la ui)
 window.__resetCampaign = function () { state = defaultState(); save(); location.reload(); };
 
 /* ---------- audio (oscilador, sin archivos) ---------- */
@@ -72,115 +71,93 @@ function tone(freq, dur, type = 'sine', delay = 0) {
   o.start(t); o.stop(t + dur + 0.02);
 }
 const sfx = {
-  tick()     { tone(420, 0.07, 'sine'); },
-  step()     { tone(540, 0.10, 'triangle'); },
-  complete() { [523.25, 659.25, 783.99].forEach((f, i) => tone(f, 0.13, 'triangle', i * 0.07)); },
-  bonfire()  { [392, 523.25, 659.25, 784].forEach((f, i) => tone(f, 0.16, 'sine', i * 0.09)); },
+  tick()  { tone(420, 0.07, 'sine'); },
+  step()  { tone(540, 0.10, 'triangle'); },
+  done()  { [523.25, 659.25, 783.99].forEach((f, i) => tone(f, 0.13, 'triangle', i * 0.07)); },
+  big()   { [392, 523.25, 659.25, 784].forEach((f, i) => tone(f, 0.16, 'sine', i * 0.09)); },
 };
 
-/* ---------- turn-ins (avisos secos, sin emoji) ---------- */
-function turnin(text, ok) {
+/* ---------- avisos (cortos y planos, sin emoji) ---------- */
+function nudge(text) {
   const wrap = document.getElementById('turnins');
   const el = document.createElement('div');
   el.className = 'turnin';
-  el.innerHTML = text + (ok ? ` <span class="ok">(${ok})</span>` : '');
+  el.textContent = text;
   wrap.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 3200);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 3000);
 }
 
 /* ---------- helpers ---------- */
-const facLevel = (n) => Math.min(n, 3);     // 0..3 → índice de frase
+const repLevel = (n) => Math.min(n, 3);
 const fameLevel = (n) => (n >= 3 ? 2 : n >= 1 ? 1 : 0);
 function commit() { save(); render(); }
 
 /* ============================================================
    ACCIONES
    ============================================================ */
-function lightCharacter() {
-  state.lit = true;
-  sfx.complete();
-  commit();
-  const entry = document.getElementById('entry');
-  entry.classList.add('out');
-  setTimeout(() => { entry.hidden = true; }, 600);
-}
-
-function openThread() {
+function startConvo() {
   if (state.thread) return;
-  state.thread = { step: 1, faction: null, used: [] };
+  state.thread = { step: 1, tipo: null, used: [] };
   sfx.step();
   commit();
 }
-
-function advanceThread() {
+function advanceConvo() {
   const th = state.thread; if (!th) return;
+  const prev = EVENT.pasos[th.step - 1];
   th.step++;
   sfx.step();
-  const stepDef = EVENT.hilo[th.step - 2];   // el que acabamos de cerrar
-  if (stepDef && stepDef.clause) turnin(stepDef.clause, 'brotó');
+  nudge(`${prev.name} · hecho`);
   commit();
 }
-
-function useAmmo(i) {
+function useOpener(i) {
   const th = state.thread; if (!th) return;
   if (!th.used.includes(i)) { th.used.push(i); sfx.tick(); commit(); }
 }
-
-function assignFaction(fac) {
+function classify(tipo) {
   const th = state.thread; if (!th) return;
-  th.faction = fac;
-  state.rep[fac]++;
-  sfx.step();
+  th.tipo = tipo;
+  state.rep[tipo]++;
   th.step = 4;
-  const f = EVENT.factions[fac];
-  turnin(`art. 1.c: ${f.label} registrado.`, fac === 'caminantes' ? 'sin color' : 'brotó');
+  sfx.step();
+  nudge(`${EVENT.tipos[tipo].label} · anotado`);
   commit();
 }
-
-function closeThread(/* closeId */) {
+function closeConvo(/* id */) {
   const th = state.thread; if (!th) return;
-  state.hilosClosed++;
+  state.convos++;
   state.thread = null;
-  sfx.complete();
-  turnin(EVENT.hilo[3].clause, 'brotó');
+  sfx.done();
+  nudge('conversación cerrada · bien hecho');
   commit();
 }
-
-function lightBonfire() {
-  if (state.hogueras >= EVENT.goals.hogueras) return;
-  state.hogueras++;
-  sfx.bonfire();
-  turnin('art. 1: hoguera encendida. el sello de goma es la prueba.', 'brotó');
+function markGood() {
+  if (state.buenos >= EVENT.goals.buenos) return;
+  state.buenos++;
+  sfx.big();
+  nudge('buen contacto anotado');
   commit();
 }
-
 function toggleServilleta(i) {
-  // marca hasta el paso i inclusive (o desmarca si ya estaba el último)
   state.servilleta = (state.servilleta === i + 1) ? i : i + 1;
   sfx.tick();
-  if (state.servilleta === EVENT.servilleta.steps.length) turnin(EVENT.servilleta.clause, 'brotó');
+  if (state.servilleta === EVENT.servilleta.steps.length) nudge('lo tienes · suéltalo cuando toque');
   commit();
 }
-
 function coCraft() {
   state.cards++;
-  sfx.complete();
-  turnin('art. 6: nodo de tu cozy web, no un «scan to add me».', 'brotó');
+  sfx.done();
+  nudge('tarjeta hecha juntos');
   commit();
 }
-
+function nightUnlocked() { return state.buenos >= 1; }
 function claimNight() {
   if (!nightUnlocked() || state.nightClaimed) return;
   state.nightClaimed = true;
-  sfx.bonfire();
-  turnin(EVENT.loot.clause, 'cobrada');
+  sfx.big();
+  nudge('te lo has ganado · disfruta');
   commit();
 }
-function nightUnlocked() {
-  return state.hogueras >= 1 || fameLevel(state.cards) >= 1;
-}
-
 function toggleMute() {
   state.muted = !state.muted;
   if (master) master.gain.value = state.muted ? 0 : VOLUME;
@@ -199,91 +176,83 @@ function applyFont() {
    RENDER
    ============================================================ */
 function render() {
-  // entrada
-  document.getElementById('entry-manifesto').textContent = EVENT.entry.manifesto;
-  document.getElementById('entry-flag').textContent = EVENT.entry.flag;
-  document.getElementById('entry-rules').textContent = EVENT.entry.rules;
-  document.getElementById('light-btn').textContent = EVENT.entry.cta;
   document.getElementById('ev').textContent = EVENT.when;
   document.getElementById('mute').textContent = state.muted ? 'mute' : 'son.';
-
-  const app = document.getElementById('app');
-  const entry = document.getElementById('entry');
-  if (state.lit) { app.hidden = false; entry.hidden = true; }
-  else { app.hidden = true; entry.hidden = false; }
-  if (!state.lit) return;
-
-  renderPrincipal();
-  renderHilo();
-  renderRep();
+  renderMarcador();
+  renderConvo();
+  renderTipos();
   renderServilleta();
   renderSellos();
   renderLoot();
 }
 
-function renderPrincipal() {
-  const g = EVENT.goals.hogueras;
-  const done = state.hogueras >= g;
-  const earned = state.hogueras > 0 ? 'earned' : '';
-  document.getElementById('principal').innerHTML = `
-    <p class="kicker">misión principal · todo el festival</p>
-    <h2><span class="bang ${done ? 'off' : ''}">!</span>salir del bosque oscuro</h2>
-    <div class="line">
-      <span class="hogueras">hogueras encendidas</span>
-      <span class="mono count ${earned}">${state.hogueras}/${g}</span>
+function renderMarcador() {
+  const g = EVENT.goals;
+  const bDone = state.buenos >= g.buenos;
+  document.getElementById('marcador').innerHTML = `
+    <p class="kicker">cómo vas · todo el finde</p>
+    <div class="score">
+      <div class="score-item">
+        <span class="score-num mono count ${state.buenos > 0 ? 'earned' : ''}">${state.buenos}/${g.buenos}</span>
+        <span class="score-lbl">buenos contactos</span>
+      </div>
+      <div class="score-item">
+        <span class="score-num mono count ${state.convos > 0 ? 'earned' : ''}">${state.convos}/${g.convos}</span>
+        <span class="score-lbl">conversaciones</span>
+      </div>
     </div>
-    <p class="clause">art. 1: vine solo y a propósito. con una ya merece la pena.</p>
+    <p class="note">${marcadorHint(bDone)}</p>
     <div class="row">
-      <button class="btn ${done ? '' : 'primary'}" data-action="bonfire" ${done ? 'disabled' : ''}>
-        ${done ? 'campaña cumplida' : 'encender una hoguera'}
+      <button class="btn ${bDone ? '' : 'primary'}" data-action="good" ${bDone ? 'disabled' : ''}>
+        ${bDone ? 'objetivo cumplido' : 'marcar un buen contacto'}
       </button>
     </div>`;
 }
+function marcadorHint(done) {
+  if (done) return 'objetivo cumplido. lo de más es regalo.';
+  if (state.buenos > 0) return 'con uno ya merecía la pena. a por el siguiente cuando puedas.';
+  if (state.convos > 0) return 'ya estás en marcha. sigue tirando.';
+  return 'empieza una conversación cuando te veas. con calma.';
+}
 
-function renderHilo() {
-  const el = document.getElementById('hilo');
+function renderConvo() {
+  const el = document.getElementById('convo');
   const th = state.thread;
   const zone = document.getElementById('zone-label');
 
   if (!th) {
-    zone.textContent = 'el bosque oscuro';
+    zone.textContent = 'sónar+d';
     el.className = 'hilo';
     el.innerHTML = `
-      <p class="kicker">el hilo · primer contacto</p>
-      <div class="step-head"><span class="step-name">ningún hilo abierto</span></div>
-      <p class="desc">cada persona nueva es un hilo. la vergüenza la lleva el personaje, no tú.</p>
-      <div class="line" style="margin-top:12px">
-        <span class="count">hilos cerrados</span>
-        <span class="mono count ${state.hilosClosed > 0 ? 'earned' : ''}">${state.hilosClosed}/${EVENT.goals.hilos}</span>
-      </div>
-      <div class="row"><button class="btn primary" data-action="open-thread">abrir un hilo</button></div>`;
+      <p class="kicker">una conversación</p>
+      <div class="step-head"><span class="step-name">no estás hablando con nadie</span></div>
+      <p class="desc">cuando veas a alguien, empieza. la app te lleva paso a paso.</p>
+      <div class="row"><button class="btn primary" data-action="start">empezar una conversación</button></div>`;
     return;
   }
 
-  const s = EVENT.hilo[th.step - 1];
+  const s = EVENT.pasos[th.step - 1];
   zone.textContent = s.name;
   el.className = 'hilo' + (s.scan ? ' scanning' : '');
 
   let body = `
-    <p class="kicker">el hilo · paso <span class="mono">${th.step}/4</span></p>
+    <p class="kicker">conversación · paso <span class="mono">${th.step}/4</span></p>
     <div class="step-head"><span class="step-n">${th.step}/4</span><span class="step-name">${s.name}</span></div>
     <p class="desc">${s.desc}</p>`;
 
-  if (s.obj) body += `<p class="obj">— ${s.obj}</p>`;
-
-  if (s.ammo) {
-    body += `<ul class="ammo">` + s.ammo.map((a, i) =>
-      `<li class="${th.used.includes(i) ? 'used' : ''}" data-action="ammo" data-i="${i}">«${a}»</li>`).join('') + `</ul>`;
+  if (s.openers) {
+    body += `<ul class="ammo">` + s.openers.map((a, i) =>
+      `<li class="${th.used.includes(i) ? 'used' : ''}" data-action="opener" data-i="${i}">«${a}»</li>`).join('') + `</ul>`;
   }
 
   if (s.scan) {
     body += `<div class="row">
-      <button class="btn" data-action="faction" data-f="jardin">el jardín</button>
-      <button class="btn" data-action="faction" data-f="bosque">el bosque oscuro</button>
-      <button class="btn" data-action="faction" data-f="caminantes">un caminante</button>
+      <button class="btn" data-action="classify" data-t="colab">colaborador</button>
+      <button class="btn" data-action="classify" data-t="cliente">cliente potencial</button>
+      <button class="btn" data-action="classify" data-t="nope">no me interesa</button>
     </div>`;
   } else if (s.closes) {
-    if (th.faction === 'jardin' || th.faction === 'bosque') {
+    if (th.tipo === 'colab' || th.tipo === 'cliente') {
       body += `<p class="pitch-box">«${EVENT.pitch}»</p>`;
     }
     body += `<div class="row">` + s.closes.map(c =>
@@ -292,26 +261,25 @@ function renderHilo() {
     body += `<div class="row"><button class="btn primary" data-action="advance">${s.cta}</button></div>`;
   }
 
-  body += `<p class="clause">${s.clause}</p>`;
+  body += `<p class="note">${s.note}</p>`;
   el.innerHTML = body;
 }
 
-function renderRep() {
-  const items = Object.entries(EVENT.factions).map(([id, f]) => {
+function renderTipos() {
+  const items = Object.entries(EVENT.tipos).map(([id, t]) => {
     const n = state.rep[id];
-    const lvl = facLevel(n);
-    const lit = n > 0 ? 'lvl' : '';
-    return `<li class="fac ${f.tone} ${lit}">
+    const lvl = repLevel(n);
+    return `<li class="fac ${t.tone} ${n > 0 ? 'lvl' : ''}">
       <div class="fac-top">
-        <span class="fac-label">${f.label}</span>
+        <span class="fac-label">${t.label}</span>
         <span class="fac-count mono">×${n}</span>
       </div>
-      <div class="fac-sub">${f.sub}</div>
-      <div class="fac-level">${f.levels[lvl]}</div>
+      <div class="fac-sub">${t.sub}</div>
+      <div class="fac-level">${t.levels[lvl]}</div>
     </li>`;
   }).join('');
-  document.getElementById('rep').innerHTML = `
-    <p class="kicker">reputación · solo sube</p>
+  document.getElementById('tipos').innerHTML = `
+    <p class="kicker">a quién has conocido</p>
     <ul class="facs">${items}</ul>`;
 }
 
@@ -321,7 +289,7 @@ function renderServilleta() {
     `<li class="${i < state.servilleta ? 'done' : ''}" data-action="servilleta" data-i="${i}">
        <span class="txt">${t}</span></li>`).join('');
   document.getElementById('servilleta').innerHTML = `
-    <p class="kicker">de oficio · give-first</p>
+    <p class="kicker">tu jugada de venta</p>
     <div class="step-head"><span class="step-name">${sv.title}</span></div>
     <p class="desc">${sv.hint}</p>
     <ul class="steps">${items}</ul>`;
@@ -333,15 +301,14 @@ function renderSellos() {
        <span class="stamp ${s.id}">${s.text}</span>
        <span class="rol">${s.rol}</span>
      </div>`).join('');
-  const fame = EVENT.fame[fameLevel(state.cards)];
   document.getElementById('sellos').innerHTML = `
-    <p class="kicker">botín · sellos y co-craft</p>
+    <p class="kicker">tus sellos</p>
     <div class="sellos">${items}</div>
     <div class="line" style="margin-top:16px">
-      <span class="count">tarjetas co-creadas</span>
+      <span class="count">tarjetas hechas juntos</span>
       <span class="mono count ${state.cards > 0 ? 'earned' : ''}">${state.cards}</span>
     </div>
-    <p class="clause">${state.cards > 0 ? '«' + fame + '»' : 'que se hagan SU tarjeta con tus sellos.'}</p>
+    <p class="note">${state.cards > 0 ? '«' + EVENT.fame[fameLevel(state.cards)] + '»' : 'que se hagan SU tarjeta con tus sellos.'}</p>
     <div class="row"><button class="btn" data-action="cocraft">alguien se hizo su tarjeta</button></div>`;
 }
 
@@ -355,7 +322,7 @@ function renderLoot() {
     <p class="hint">${EVENT.loot.hint}</p>
     ${open ? `<div class="row">
       <button class="btn primary" data-action="night" ${claimed ? 'disabled' : ''}>
-        ${claimed ? 'cobrada · sin culpa' : EVENT.loot.claim}
+        ${claimed ? 'cobrada · disfruta' : EVENT.loot.claim}
       </button></div>` : ''}`;
 }
 
@@ -366,21 +333,19 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   ensureAudio();
-  const a = btn.dataset.action;
-  switch (a) {
-    case 'light':       lightCharacter(); break;
-    case 'open-thread': openThread(); break;
-    case 'advance':     advanceThread(); break;
-    case 'ammo':        useAmmo(+btn.dataset.i); break;
-    case 'faction':     assignFaction(btn.dataset.f); break;
-    case 'close':       closeThread(btn.dataset.c); break;
-    case 'bonfire':     lightBonfire(); break;
-    case 'servilleta':  toggleServilleta(+btn.dataset.i); break;
-    case 'cocraft':     coCraft(); break;
-    case 'night':       claimNight(); break;
-    case 'mute':        toggleMute(); break;
-    case 'textup':      bumpFont(+1); break;
-    case 'textdown':    bumpFont(-1); break;
+  switch (btn.dataset.action) {
+    case 'start':      startConvo(); break;
+    case 'advance':    advanceConvo(); break;
+    case 'opener':     useOpener(+btn.dataset.i); break;
+    case 'classify':   classify(btn.dataset.t); break;
+    case 'close':      closeConvo(btn.dataset.c); break;
+    case 'good':       markGood(); break;
+    case 'servilleta': toggleServilleta(+btn.dataset.i); break;
+    case 'cocraft':    coCraft(); break;
+    case 'night':      claimNight(); break;
+    case 'mute':       toggleMute(); break;
+    case 'textup':     bumpFont(+1); break;
+    case 'textdown':   bumpFont(-1); break;
   }
 });
 
