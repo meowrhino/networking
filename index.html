@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- línea superior discreta -->
   <div class="topquiet">
     <span class="ev" id="ev">sónar+d 2026</span>
     <span class="ctrls">
@@ -23,48 +22,18 @@
     </span>
   </div>
 
-  <!-- las 4 secciones, en una sola línea horizontal (se cambian con swipe o menú) -->
+  <!-- las 4 secciones se cruzan con fundido (carrete) -->
   <div class="viewport" id="viewport">
-    <div class="strip" id="strip">
-
-      <section class="page" data-page="0">
-        <p class="page-title">hablar</p>
-        <div id="convo"></div>
-      </section>
-
-      <section class="page" data-page="1">
-        <p class="page-title">contactos</p>
-        <p class="kicker">añadir uno</p>
-        <input id="c-name" type="text" autocomplete="off" placeholder="nombre (o como lo recuerdes)">
-        <div class="row" id="c-tipo">
-          <button class="btn" data-action="ctipo" data-t="colab">colaborador</button>
-          <button class="btn" data-action="ctipo" data-t="cliente">cliente potencial</button>
-          <button class="btn" data-action="ctipo" data-t="nope">no me interesa</button>
-        </div>
-        <textarea id="c-note" placeholder="nota (de qué hablasteis, en qué anda…)"></textarea>
-        <div class="row"><button class="btn primary" data-action="csave">guardar contacto</button></div>
-        <div id="contactos-list"></div>
-      </section>
-
-      <section class="page" data-page="2">
-        <p class="page-title">frases</p>
-        <div id="frases"></div>
-      </section>
-
-      <section class="page" data-page="3">
-        <p class="page-title">tarjetas</p>
-        <div id="tarjetas"></div>
-      </section>
-
-    </div>
+    <section class="page active" data-page="0"><div id="convo"></div></section>
+    <section class="page" data-page="1"><div id="contactos"></div></section>
+    <section class="page" data-page="2"><div id="frases"></div></section>
+    <section class="page" data-page="3"><div id="tarjetas"></div></section>
   </div>
 
-  <!-- menú inferior -->
-  <nav class="tabbar" id="tabbar">
-    <button data-go="0">hablar</button>
-    <button data-go="1">contactos</button>
-    <button data-go="2">frases</button>
-    <button data-go="3">tarjetas</button>
+  <!-- menú: dónde estás (una palabra) + carrete -->
+  <nav class="navbar">
+    <div class="dots" id="dots"></div>
+    <button class="navword" id="navword" data-action="navnext">hablar</button>
   </nav>
 
   <div class="turnins" id="turnins" aria-live="polite"></div>
