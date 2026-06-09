@@ -55,18 +55,33 @@ body::after {
 }
 .page.active { opacity: 1; visibility: visible; pointer-events: auto; }
 
-/* ---------- menú inferior (una palabra + puntos) ---------- */
+/* ---------- menú arrastrable (estilo pol roig) ---------- */
 .navbar {
-  flex: 0 0 auto;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 12px 0 calc(14px + env(safe-area-inset-bottom, 0));
+  position: relative; flex: 0 0 auto;
   border-top: 1px solid var(--hair); background: var(--humus);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
-.dots { display: flex; gap: 8px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fog-dim); border: 0; padding: 0; cursor: pointer; transition: background .3s, transform .3s; }
-.dot.active { background: var(--ember); transform: scale(1.3); }
-.navword { font: inherit; font-size: 1.15rem; font-weight: 600; text-transform: lowercase; background: transparent; border: 0; color: var(--parch); cursor: pointer; padding: 2px 10px; }
-.navword:active { color: var(--ember); }
+.navrail {
+  display: flex; gap: 40px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 15px 50%;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.navrail::-webkit-scrollbar { display: none; }
+.navitem {
+  scroll-snap-align: center; scroll-snap-stop: always;
+  flex: 0 0 auto; white-space: nowrap;
+  font: inherit; font-size: 1.15rem; font-weight: 600; text-transform: lowercase;
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--fog-dim); opacity: .5;
+  transition: color .3s, opacity .3s, transform .3s;
+}
+.navitem.active { color: var(--ember); opacity: 1; transform: scale(1.12); }
+/* difumina los lados para que destaque el del centro */
+.navrail-mask {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--humus) 2%, transparent 24%, transparent 76%, var(--humus) 98%);
+}
 
 /* ---------- texto base ---------- */
 .kicker { font-size: .72rem; color: var(--fog); letter-spacing: .08em; margin: 0 0 8px; }

@@ -82,16 +82,43 @@ function nudge(text) {
 function commit() { save(); render(); }
 
 /* ============================================================
-   NAVEGACIÓN (carrete con fundido)
+   NAVEGACIÓN (menú arrastrable estilo pol roig + fundido)
    ============================================================ */
-function goTo(i) {
-  page = (i + PAGES.length) % PAGES.length;   // cicla (carrete)
-  document.querySelectorAll('.page').forEach((p, idx) => p.classList.toggle('active', idx === page));
-  document.getElementById('navword').textContent = PAGES[page];
-  document.querySelectorAll('#dots .dot').forEach((d, idx) => d.classList.toggle('active', idx === page));
-}
-function navNext() { goTo(page + 1); }
+const navrail = document.getElementById('navrail');
+let railLock = false, lockTimer = null, settleTimer = null;
 
+function buildNav() {
+  navrail.innerHTML = PAGES.map((w, i) => `<button class="navitem" data-action="navitem" data-i="${i}">${w}</button>`).join('');
+}
+function applyPage(i, scrollRail) {
+  page = (i + PAGES.length) % PAGES.length;
+  document.querySelectorAll('.page').forEach((p, idx) => p.classList.toggle('active', idx === page));
+  navrail.querySelectorAll('.navitem').forEach((n, idx) => n.classList.toggle('active', idx === page));
+  if (scrollRail) centerNavItem(page);
+}
+function centerNavItem(i) {
+  const it = navrail.querySelectorAll('.navitem')[i]; if (!it) return;
+  // instantáneo: con scroll-snap-stop:always el scroll suave se atasca en el 1er anclaje
+  railLock = true; clearTimeout(lockTimer);
+  navrail.scrollTo({ left: it.offsetLeft + it.offsetWidth / 2 - navrail.clientWidth / 2, behavior: 'auto' });
+  lockTimer = setTimeout(() => { railLock = false; }, 150);
+}
+// al arrastrar el menú y soltar, navega a la sección que quede centrada
+navrail.addEventListener('scroll', () => {
+  if (railLock) return;
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    const center = navrail.scrollLeft + navrail.clientWidth / 2;
+    let best = 0, bestD = Infinity;
+    navrail.querySelectorAll('.navitem').forEach((it, idx) => {
+      const c = it.offsetLeft + it.offsetWidth / 2, d = Math.abs(c - center);
+      if (d < bestD) { bestD = d; best = idx; }
+    });
+    if (best !== page) { applyPage(best, false); ensureAudio(); sfx.tick(); }
+  }, 110);
+}, { passive: true });
+
+// swipe en el contenido también cambia de sección (y centra el menú)
 (function enableSwipe() {
   const vp = document.getElementById('viewport');
   let x0 = 0, y0 = 0, on = false;
@@ -99,7 +126,7 @@ function navNext() { goTo(page + 1); }
   vp.addEventListener('touchend', (e) => {
     if (!on) return; on = false;
     const t = e.changedTouches[0]; const dx = t.clientX - x0, dy = t.clientY - y0;
-    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) goTo(page + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) applyPage(page + (dx < 0 ? 1 : -1), true);
   }, { passive: true });
 })();
 
@@ -216,13 +243,11 @@ function renderTarjetas() {
    EVENTOS
    ============================================================ */
 document.addEventListener('click', (e) => {
-  const dot = e.target.closest('#dots .dot');
-  if (dot) { ensureAudio(); goTo(+dot.dataset.go); return; }
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   ensureAudio();
   switch (btn.dataset.action) {
-    case 'navnext':    navNext(); break;
+    case 'navitem':    applyPage(+btn.dataset.i, true); break;
     case 'start':      startConvo(); break;
     case 'advance':    advanceConvo(); break;
     case 'opener':     useOpener(+btn.dataset.i); break;
@@ -240,10 +265,8 @@ document.addEventListener('click', (e) => {
 });
 
 /* ---------- arranque ---------- */
-function buildDots() {
-  document.getElementById('dots').innerHTML = PAGES.map((_, i) => `<button class="dot" data-go="${i}" aria-label="ir a ${PAGES[i]}"></button>`).join('');
-}
 applyFont();
-buildDots();
-goTo(0);
+buildNav();
+applyPage(0, false);
 render();
+requestAnimationFrame(() => centerNavItem(0));
