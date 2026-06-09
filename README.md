@@ -1,8 +1,9 @@
 # el pequeño networker ☁️
 
 una pequeña app para acordarte de hacer networking en **sónar+d 2026** (18–19 juny, llotja de mar)
-y tirar p'alante sin agobiarte. estilo "carrete": 4 secciones que cambias con **swipe** (o tocando
-la **palabra del menú**, que te dice dónde estás), con un **fundido** suave.
+y tirar p'alante sin agobiarte. menú **arrastrable** (estilo pol roig): la sección activa va en el
+centro y las demás asoman a los lados; **arrastras** la que quieras al centro (o tocas), y el
+contenido cruza en **fundido**.
 
 hecha a mano en html/css/js, sin frameworks, sin build, sin servidor. todo el progreso vive en el
 navegador (`localStorage`). en vivo: **https://meowrhino.github.io/networking/**
@@ -14,7 +15,7 @@ navegador (`localStorage`). en vivo: **https://meowrhino.github.io/networking/**
 3. **frases** — tu chuleta; cada frase es un botón que cuenta las veces que la usas (pitch, aperturas, preguntas, el cálculo de la servilleta).
 4. **tarjetas** — contadores de **tarjetas entregadas** y **creadas y entregadas**, más **sellos estampados en piel** (un contador por cada uno de los 5).
 
-navegas con **swipe del dedo** o tocando la palabra del menú (avanza en bucle). los puntos marcan en cuál estás.
+navegas **arrastrando el menú** (la sección que dejes en el centro es a la que vas) o con **swipe** sobre el contenido.
 
 ## cómo abrirla en local
 
