@@ -121,6 +121,12 @@ body::after {
 .fbtn .fnum { font-family: ui-monospace, monospace; font-size: .78rem; color: var(--fog-dim); flex: 0 0 auto; }
 .fbtn.has { border-color: var(--garden); }
 .fbtn.has .fnum { color: var(--garden); }
+.fbtn:active { background: rgba(232, 115, 44, .06); }
+.flist { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.fbtn.lg { padding: 12px 0 12px 14px; }
+.fbtn.lg .ftext { font-size: 1.1rem; }
+.fbtn.lg .fnum { font-size: 1.2rem; }
+.fsub { display: block; font-size: .72rem; color: var(--fog); margin-top: 3px; }
 
 /* ---------- sellos ---------- */
 .stamp { font-family: "Courier New", monospace; text-transform: none; color: var(--parch); }

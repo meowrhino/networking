@@ -169,14 +169,12 @@ function renderContactos() {
   const total = cc.general + cc.cliente + cc.colab;
   const items = Object.entries(EVENT.tipos).map(([id, t]) => {
     const n = cc[id] || 0;
-    return `<div class="counter ${n > 0 ? 'has' : ''}" data-action="addcontact" data-t="${id}">
-      <span class="clabel">${t.label}</span>
-      <span class="cnum">${n}</span>
-    </div>`;
+    return `<div class="fbtn lg ${n > 0 ? 'has' : ''}" data-action="addcontact" data-t="${id}">
+      <span class="ftext">${t.label}</span><span class="fnum">×${n}</span></div>`;
   }).join('');
   document.getElementById('contactos').innerHTML = `
     <p class="kicker">contactos · toca para sumar</p>
-    <div class="counters">${items}</div>
+    <div class="flist">${items}</div>
     <p class="note">total: <span class="mono">${total}</span></p>`;
 }
 
@@ -197,22 +195,20 @@ function renderFrases() {
 function renderTarjetas() {
   const skin = EVENT.sellos.map(s => {
     const n = state.skin[s.id] || 0;
-    return `<div class="counter small ${n > 0 ? 'has' : ''}" data-action="skin" data-id="${s.id}">
-      <span class="clabel stamp">${s.text}</span><span class="cnum">${n}</span>
-    </div>`;
+    return `<div class="fbtn ${n > 0 ? 'has' : ''}" data-action="skin" data-id="${s.id}">
+      <span class="ftext stamp">${s.text}</span><span class="fnum">×${n}</span></div>`;
   }).join('');
   document.getElementById('tarjetas').innerHTML = `
     <p class="kicker">tarjetas · toca para sumar</p>
-    <div class="counters">
-      <div class="counter ${state.cardsGiven > 0 ? 'has' : ''}" data-action="givecard">
-        <span class="clabel">tarjetas entregadas</span><span class="cnum">${state.cardsGiven}</span></div>
-      <div class="counter ${state.cardsMade > 0 ? 'has' : ''}" data-action="makecard">
-        <span class="clabel">creadas y entregadas<br><span class="csub">alguien se hizo la suya con tus sellos</span></span><span class="cnum">${state.cardsMade}</span></div>
+    <div class="flist">
+      <div class="fbtn lg ${state.cardsGiven > 0 ? 'has' : ''}" data-action="givecard">
+        <span class="ftext">tarjetas entregadas</span><span class="fnum">×${state.cardsGiven}</span></div>
+      <div class="fbtn lg ${state.cardsMade > 0 ? 'has' : ''}" data-action="makecard">
+        <span class="ftext">creadas y entregadas<span class="fsub">alguien se hizo la suya con tus sellos</span></span><span class="fnum">×${state.cardsMade}</span></div>
     </div>
-
     <div class="block">
       <p class="kicker">sellos estampados en piel</p>
-      <div class="counters">${skin}</div>
+      <div class="flist">${skin}</div>
     </div>`;
 }
 
