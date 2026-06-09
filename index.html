@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14130f">
   <title>el pequeño networker</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">☁️</text></svg>'>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,12 +13,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- nombre grande, detrás de todo -->
-  <div class="zone-label" id="zone-label">sónar+d</div>
-
-  <!-- línea superior discreta (no es un header) -->
+  <!-- línea superior discreta -->
   <div class="topquiet">
-    <span class="ev" id="ev">sónar+d 2026 · 18–19 juny</span>
+    <span class="ev" id="ev">sónar+d 2026</span>
     <span class="ctrls">
       <button data-action="textdown" aria-label="texto más pequeño">a−</button>
       <button data-action="textup" aria-label="texto más grande">a+</button>
@@ -25,16 +23,50 @@
     </span>
   </div>
 
-  <main id="app">
-    <section class="marcador" id="marcador"></section>
-    <section class="convo" id="convo"></section>
-    <section class="tipos" id="tipos"></section>
-    <section class="servilleta" id="servilleta"></section>
-    <section class="sellos-sec" id="sellos"></section>
-    <section class="loot" id="loot"></section>
-  </main>
+  <!-- las 4 secciones, en una sola línea horizontal (se cambian con swipe o menú) -->
+  <div class="viewport" id="viewport">
+    <div class="strip" id="strip">
 
-  <!-- avisos cortos -->
+      <section class="page" data-page="0">
+        <p class="page-title">hablar</p>
+        <div id="convo"></div>
+      </section>
+
+      <section class="page" data-page="1">
+        <p class="page-title">contactos</p>
+        <p class="kicker">añadir uno</p>
+        <input id="c-name" type="text" autocomplete="off" placeholder="nombre (o como lo recuerdes)">
+        <div class="row" id="c-tipo">
+          <button class="btn" data-action="ctipo" data-t="colab">colaborador</button>
+          <button class="btn" data-action="ctipo" data-t="cliente">cliente potencial</button>
+          <button class="btn" data-action="ctipo" data-t="nope">no me interesa</button>
+        </div>
+        <textarea id="c-note" placeholder="nota (de qué hablasteis, en qué anda…)"></textarea>
+        <div class="row"><button class="btn primary" data-action="csave">guardar contacto</button></div>
+        <div id="contactos-list"></div>
+      </section>
+
+      <section class="page" data-page="2">
+        <p class="page-title">frases</p>
+        <div id="frases"></div>
+      </section>
+
+      <section class="page" data-page="3">
+        <p class="page-title">tarjetas</p>
+        <div id="tarjetas"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- menú inferior -->
+  <nav class="tabbar" id="tabbar">
+    <button data-go="0">hablar</button>
+    <button data-go="1">contactos</button>
+    <button data-go="2">frases</button>
+    <button data-go="3">tarjetas</button>
+  </nav>
+
   <div class="turnins" id="turnins" aria-live="polite"></div>
 
   <script src="events/sonar.js"></script>

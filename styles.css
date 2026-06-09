@@ -1,66 +1,49 @@
 /* ============================================================
-   el pequeño networker — estilos · v2
-   bosque oscuro cálido · sin cajas · sin header · color que se gana
-   tipografía: inknut antiqua (humana) + mono (la máquina)
+   el pequeño networker — estilos
+   app de 4 pestañas: una tira horizontal (translateX por índice),
+   menú abajo, swipe del dedo. oscuro cálido, sin cajas.
    ============================================================ */
 
 :root {
-  --humus:    #14130f;  /* fondo, bosque oscuro cálido */
-  --humus-2:  #1c1a14;  /* sutil elevación */
-  --parch:    #d9cdb0;  /* pergamino, texto principal */
-  --fog:      #8a8676;  /* niebla, lo inactivo / objetivos sin tocar */
-  --fog-dim:  #5a564b;  /* niebla apagada */
-  --ember:    #e8732c;  /* ámbar-brasa: el único acento que SE GANA */
-  --garden:   #9bb05f;  /* verde-jardín: solo facción jardín */
-  --hair:     rgba(217, 205, 176, .10); /* hairline, jamás caja */
-
-  --fs: 1rem;           /* escala de texto (los botones a-/a+ la mueven) */
+  --humus:    #14130f;
+  --humus-2:  #1c1a14;
+  --parch:    #d9cdb0;
+  --fog:      #8a8676;
+  --fog-dim:  #5a564b;
+  --ember:    #e8732c;
+  --garden:   #9bb05f;
+  --hair:     rgba(217, 205, 176, .10);
+  --fs: 1rem;
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body { height: 100%; margin: 0; padding: 0; }
 
 body {
+  display: flex; flex-direction: column;
+  height: 100dvh; overflow: hidden;
   background: var(--humus);
   color: var(--parch);
   font-family: "Inknut Antiqua", Georgia, serif;
-  font-weight: 400;
   font-size: var(--fs);
   line-height: 1.5;
-  text-transform: lowercase;       /* minúscula militante */
+  text-transform: lowercase;
   letter-spacing: .01em;
-  min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
 }
 
-/* grano de papel/sello, muy sutil (decisión nueva del personaje) */
+/* grano sutil */
 body::after {
-  content: "";
-  position: fixed; inset: 0; z-index: 9999;
+  content: ""; position: fixed; inset: 0; z-index: 9999;
   pointer-events: none; opacity: .035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* nombre de zona gigante, detrás de todo (tic nativo de meowrhino) */
-.zone-label {
-  position: fixed; left: 50%; top: 38%;
-  transform: translate(-50%, -50%);
-  z-index: 0; pointer-events: none;
-  font-size: clamp(4rem, 17dvw, 15rem);
-  line-height: .9; font-weight: 600;
-  color: rgba(217, 205, 176, .035);
-  white-space: nowrap; max-width: 100vw; overflow: hidden;
-  text-align: center;
-  transition: color .8s ease;
-}
-
-/* línea superior discreta — NO es un header */
+/* ---------- línea superior ---------- */
 .topquiet {
-  position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px;
-  max-width: 620px; margin: 0 auto; padding: 16px 20px 0;
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 20px;
   font-size: .72rem; color: var(--fog);
 }
 .topquiet .ctrls { display: flex; gap: 4px; }
@@ -72,128 +55,118 @@ body::after {
 .topquiet button:hover { color: var(--parch); }
 .topquiet button:active { color: var(--ember); }
 
-/* ---------- layout general ---------- */
-main {
-  position: relative; z-index: 1;
-  max-width: 620px; margin: 0 auto;
-  padding: 8px 20px 80px;
+/* ---------- la tira horizontal de páginas ---------- */
+.viewport { flex: 1 1 auto; overflow: hidden; position: relative; }
+.strip {
+  display: flex; height: 100%; width: 100%;
+  transform: translateX(calc(var(--i, 0) * -100%));
+  transition: transform .35s cubic-bezier(.2, .8, .2, 1);
 }
-main[hidden] { display: none; }
+.page {
+  flex: 0 0 100%; width: 100%; height: 100%;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 6px 20px 28px;
+}
+.page-title { font-size: 1.6rem; font-weight: 600; margin: 6px 0 14px; }
 
-section { padding: 22px 0; border-top: 1px solid var(--hair); }
-section:first-child { border-top: 0; }
+/* ---------- menú inferior ---------- */
+.tabbar {
+  flex: 0 0 auto;
+  display: flex;
+  border-top: 1px solid var(--hair);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--humus);
+}
+.tabbar button {
+  flex: 1; font: inherit; font-size: .82rem; text-transform: lowercase;
+  background: transparent; border: 0; color: var(--fog);
+  padding: 14px 6px; cursor: pointer;
+  border-top: 2px solid transparent; margin-top: -1px;
+}
+.tabbar button.active { color: var(--ember); border-top-color: var(--ember); }
 
+/* ---------- texto base ---------- */
 .kicker { font-size: .72rem; color: var(--fog); letter-spacing: .08em; margin: 0 0 6px; }
-.clause { font-family: ui-monospace, "SF Mono", Menlo, monospace;
-          text-transform: none; font-size: .72rem; color: var(--fog-dim); margin: 8px 0 0; }
-
-/* dato de máquina: contadores en mono */
+.note { font-size: .84rem; color: var(--fog); margin: 12px 0 0; line-height: 1.5; }
+.desc { margin: 8px 0 0; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none; }
 .count { color: var(--fog); }
 .count.earned { color: var(--ember); }
-.count.flash { animation: emberflash .5s ease; }
-@keyframes emberflash { 0% { color: var(--parch); } 30% { color: var(--ember); transform: scale(1.06); } 100% {} }
+.line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.block { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--hair); }
 
-/* ---------- el marcador de quest activa ---------- */
-.bang { color: var(--ember); font-weight: 700; margin-right: .4em; }
-.bang.off { color: var(--fog-dim); }
-
-/* ---------- misión principal ---------- */
-.principal h2 { font-size: 1.5rem; font-weight: 600; margin: 0; }
-.principal .line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 10px; }
-.principal .hogueras { font-size: 1.1rem; }
-
-/* ---------- botones (sin cajas: borde fino, se encienden) ---------- */
+/* ---------- botones ---------- */
 .btn {
-  font: inherit; font-size: .92rem;
-  text-transform: lowercase;
+  font: inherit; font-size: .92rem; text-transform: lowercase;
   background: transparent; color: var(--parch);
-  border: 1px solid var(--hair);
-  border-radius: 11px; padding: 11px 16px;
-  cursor: pointer;
-  transition: border-color .15s ease, color .15s ease, background .15s ease;
+  border: 1px solid var(--hair); border-radius: 11px; padding: 11px 16px;
+  cursor: pointer; transition: border-color .15s, color .15s, background .15s;
 }
 .btn:hover { border-color: var(--ember); color: var(--ember); }
 .btn:active { background: rgba(232, 115, 44, .08); }
-.btn.ghost { border-color: transparent; color: var(--fog); padding-left: 0; padding-right: 0; }
-.btn.ghost:hover { color: var(--ember); }
 .btn.primary { border-color: var(--ember); color: var(--ember); }
 .btn.primary:hover { background: rgba(232, 115, 44, .12); }
+.btn.sel { border-color: var(--ember); color: var(--ember); background: rgba(232, 115, 44, .08); }
 .btn:disabled { opacity: .4; cursor: default; border-color: var(--hair); color: var(--fog-dim); }
-
 .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 
-/* ---------- el hilo (cadena de primer contacto) ---------- */
-.hilo .step-head { display: flex; align-items: baseline; gap: 10px; }
-.hilo .step-n { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none; color: var(--ember); font-size: .8rem; }
-.hilo .step-name { font-size: 1.25rem; font-weight: 600; }
-.hilo .desc { color: var(--parch); margin: 8px 0 0; }
-.hilo .obj { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none;
-             color: var(--fog); font-size: .82rem; margin: 12px 0 0; }
-
-/* munición: frases sugeridas, pinchables */
-.ammo { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.ammo li {
-  border-left: 2px solid var(--hair); padding: 4px 0 4px 12px;
-  color: var(--parch); cursor: pointer; transition: border-color .15s, color .15s;
+/* ---------- formularios ---------- */
+input, textarea {
+  font: inherit; text-transform: lowercase;
+  background: var(--humus-2); color: var(--parch);
+  border: 1px solid var(--hair); border-radius: 10px;
+  padding: 11px 13px; width: 100%; margin-top: 10px;
 }
-.ammo li:hover { border-color: var(--ember); color: var(--ember); }
-.ammo li.used { color: var(--garden); border-color: var(--garden); }
+input::placeholder, textarea::placeholder { color: var(--fog-dim); }
+input:focus, textarea:focus { outline: none; border-color: var(--ember); }
+textarea { min-height: 64px; resize: vertical; }
 
-/* escáner: cursor crosshair, el gesto arcade ES la mecánica */
-.hilo.scanning { cursor: crosshair; }
-
+/* ---------- conversación (los 4 pasos) ---------- */
+.step-head { display: flex; align-items: baseline; gap: 10px; }
+.step-n { font-family: ui-monospace, monospace; text-transform: none; color: var(--ember); font-size: .8rem; }
+.step-name { font-size: 1.25rem; font-weight: 600; }
+.obj { font-family: ui-monospace, monospace; text-transform: none; color: var(--fog); font-size: .82rem; margin: 12px 0 0; }
+.scanning { cursor: crosshair; }
 .pitch-box { color: var(--fog); font-size: .9rem; margin: 12px 0 0; border-left: 2px solid var(--hair); padding-left: 12px; }
 
-/* ---------- facciones (reputación que solo sube) ---------- */
-.facs { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
-.fac .fac-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.fac .fac-label { font-size: 1.05rem; }
-.fac .fac-sub { font-size: .74rem; color: var(--fog); }
-.fac .fac-level { font-size: .92rem; color: var(--fog-dim); transition: color .4s ease; }
-.fac .fac-count { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none; font-size: .76rem; color: var(--fog); }
-.fac.lvl .fac-level { color: var(--parch); }
-.fac.garden.lvl .fac-level { color: var(--garden); }
-.fac.ember.lvl .fac-level { color: var(--ember); }
+.ammo { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ammo li { border-left: 2px solid var(--hair); padding: 4px 0 4px 12px; color: var(--parch); cursor: pointer; transition: border-color .15s, color .15s; }
+.ammo li:hover { border-color: var(--ember); color: var(--ember); }
+.ammo li.used { color: var(--garden); border-color: var(--garden); }
+.ammo.plain li { cursor: default; }
+.ammo.plain li:hover { border-color: var(--hair); color: var(--parch); }
 
-/* ---------- servilleta + sellos ---------- */
 .steps { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: s; display: flex; flex-direction: column; gap: 10px; }
-.steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--parch); cursor: pointer; }
+.steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--parch); }
 .steps li::before { counter-increment: s; content: counter(s); font-family: ui-monospace, monospace; color: var(--fog-dim); flex: 0 0 auto; }
-.steps li.done { color: var(--garden); }
-.steps li.done::before { color: var(--garden); }
-.steps li.done .txt { text-decoration: line-through; text-decoration-thickness: 1px; }
 
+/* ---------- contactos ---------- */
+.clist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.citem { border-top: 1px solid var(--hair); padding: 11px 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.citem .cmain { min-width: 0; }
+.citem .cname { font-size: 1rem; }
+.citem .cnote { font-size: .78rem; color: var(--fog); margin-top: 2px; }
+.citem .ctipo { font-size: .74rem; flex: 0 0 auto; }
+.ctipo.colab { color: var(--garden); }
+.ctipo.cliente { color: var(--ember); }
+.ctipo.nope { color: var(--fog); }
+.tally { display: flex; gap: 18px; margin-top: 8px; font-size: .8rem; color: var(--fog); flex-wrap: wrap; }
+.tally b { color: var(--parch); }
+
+/* ---------- frases ---------- */
+.fgroup { margin-top: 18px; }
+.fgroup h3 { font-size: .95rem; color: var(--ember); margin: 0 0 8px; font-weight: 600; }
+
+/* ---------- sellos / tarjetas ---------- */
 .sellos { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .sello { display: flex; align-items: baseline; gap: 12px; }
-.sello .stamp {
-  font-family: "Courier New", ui-monospace, monospace; text-transform: none;
-  border: 1px dashed var(--fog-dim); border-radius: 8px;
-  padding: 6px 12px; color: var(--parch); white-space: nowrap;
-}
+.sello .stamp { font-family: "Courier New", monospace; text-transform: none; border: 1px dashed var(--fog-dim); border-radius: 8px; padding: 6px 12px; color: var(--parch); white-space: nowrap; }
 .sello .stamp.nube { border: 0; font-size: 1.4rem; }
 .sello .rol { font-size: .76rem; color: var(--fog); }
+.bignum { font-size: 2.1rem; line-height: 1; }
 
-/* ---------- botín de la noche ---------- */
-.loot .locked { color: var(--fog-dim); }
-.loot.unlocked .locked { color: var(--ember); }
-.loot .hint { font-size: .76rem; color: var(--fog); margin-top: 6px; }
-
-/* ---------- marcador (cómo vas) ---------- */
-.score { display: flex; gap: 32px; margin-top: 4px; flex-wrap: wrap; }
-.score-item { display: flex; flex-direction: column; gap: 3px; }
-.score-num { font-size: 2.1rem; line-height: 1; }
-.score-lbl { font-size: .82rem; color: var(--fog); }
-
-/* nota plana de ayuda (en vez de la voz "cláusula") */
-.note { text-transform: none; font-size: .84rem; color: var(--fog); margin: 12px 0 0; line-height: 1.5; }
-
-/* ---------- turn-ins (avisos secos, sin emoji) ---------- */
-.turnins {
-  position: fixed; left: 0; right: 0; bottom: 18px; z-index: 1000;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  pointer-events: none; padding: 0 16px;
-}
+/* ---------- avisos ---------- */
+.turnins { position: fixed; left: 0; right: 0; bottom: 74px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; padding: 0 16px; }
 .turnin {
   font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none;
   font-size: .78rem; color: var(--parch);
@@ -202,8 +175,5 @@ section:first-child { border-top: 0; }
   opacity: 0; transform: translateY(10px); transition: opacity .3s, transform .3s;
 }
 .turnin.show { opacity: 1; transform: translateY(0); }
-.turnin .ok { color: var(--garden); }
 
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

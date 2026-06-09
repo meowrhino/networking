@@ -1,25 +1,20 @@
-# el pequeño networker 🌲
+# el pequeño networker ☁️
 
 una pequeña app para acordarte de hacer networking en **sónar+d 2026** (18–19 juny, llotja de mar)
-y tirar p'alante sin agobiarte. la abres, miras qué toca hacer, y sigues.
+y tirar p'alante sin agobiarte. estilo "teléfono": 4 pestañas que cambias con **swipe** o con el
+**menú de abajo**.
 
 hecha a mano en html/css/js, sin frameworks, sin build, sin servidor. todo el progreso vive en el
 navegador (`localStorage`). en vivo: **https://meowrhino.github.io/el-pequeno-networker/**
 
-## qué hace
+## las 4 pestañas
 
-- **marcador** — los dos números del finde: **buenos contactos** (0/3) y **conversaciones** (0/8).
-- **una conversación, paso a paso** — lo más difícil, troceado:
-  1. **acércate** (ponte al lado de alguien; no hace falta hablar aún)
-  2. **rompe el hielo** (saluda y suelta una frase — con tus aperturas listas)
-  3. **entérate de qué va** (dos preguntas y clasificas a la persona)
-  4. **cierra** (dale tu tarjeta + pitch, o despídete majo)
-- **a quién has conocido** — clasificas en **colaborador** / **cliente potencial** / **no me interesa**, para saber tú qué hacer.
-- **el cálculo de la servilleta** — tu jugada de venta: su mensualidad anual vs. tu pago único.
-- **tus sellos** — los 3 reales (¿quieres una web? / meowrhino.studio / nube); co-craft.
-- **la recompensa** — salir de fiesta sin culpa, se desbloquea con tu primer buen contacto.
+1. **hablar** (abre por defecto) — una conversación paso a paso: acércate → rompe el hielo → entérate de qué va → cierra. con tus frases listas.
+2. **contactos** — añade a quien conozcas (nombre + tipo: colaborador / cliente potencial / no me interesa + nota). tu lista real de la jornada.
+3. **frases** — tu chuleta de jugadas de venta: el pitch, aperturas, preguntas y el cálculo de la servilleta.
+4. **tarjetas** — tus 3 sellos + contadores: tarjetas **entregadas** y **creadas y entregadas**.
 
-es **todo el finde, sin reiniciar**. el progreso solo sube; el color (ámbar/verde) se gana al actuar.
+navegas con **swipe del dedo** (la tira se mueve con `transform: translateX(var(--i)*-100%)`) o tocando el menú de abajo.
 
 ## cómo abrirla en local
 
@@ -32,19 +27,19 @@ node serve.js   # o: python3 -m http.server 8000
 ## estructura
 
 ```
-index.html        estructura + carga de scripts
-styles.css        el look: oscuro, sin cajas, color que se gana
-app.js            lógica: estado, render, audio, eventos
-events/sonar.js   los textos editables (números, pasos, frases, tipos, sellos)
-docs/concepto-v2.md   el documento de concepto (no se publica)
+index.html        estructura: 4 páginas en una tira horizontal + menú abajo
+styles.css        el look: oscuro, sin cajas, pestañas, swipe
+app.js            lógica: estado, navegación, render por pestaña
+events/sonar.js   los textos editables (pasos, tipos, frases, sellos)
+docs/concepto-v2.md   documento de concepto (no se publica)
 serve.js          servidor estático mínimo (solo desarrollo)
 ```
 
-> todo lo editable (números, pasos, frases de apertura, tipos, sellos) vive en `events/sonar.js`.
+> todo lo editable (pasos, frases de apertura, tipos, sellos) vive en `events/sonar.js`.
 
 ## notas
 
-- estado en `localStorage['epn_state_v3']`. reset solo para pruebas: en consola, `__resetCampaign()`.
-- arriba a la derecha: `a−` / `a+` (tamaño de texto) y `son./mute`.
+- estado en `localStorage['epn_state_v4']`. reset solo para pruebas: en consola, `__resetCampaign()`.
+- arriba a la derecha: `a−` / `a+` (tamaño de texto) y `son./mute`. favicon = emoji ☁️ (se cambia en una línea en `index.html`).
 - el ☁ del sello "nube" es un placeholder → meter el svg real.
-- pendiente: más frases de apertura (las trabajamos), modo "¿qué hago ahora?", y pwa/offline.
+- pendiente: pulir frases, conectar "cerrar conversación" con "guardar contacto", y pwa/offline.
