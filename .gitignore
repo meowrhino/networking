@@ -3,6 +3,7 @@
 
 # tooling local (no hace falta online)
 .claude/
+.wrangler/
 
 # notas personales — fuera del repo público
 docs/
