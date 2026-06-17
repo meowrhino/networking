@@ -1,0 +1,9 @@
+# no servir: config, dev y notas privadas (gitignore no afecta a wrangler en deploys locales)
+wrangler.jsonc
+.assetsignore
+.gitignore
+serve.js
+README.md
+.claude
+docs
+investigacion networking game.md

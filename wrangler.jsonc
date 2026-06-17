@@ -1,0 +1,9 @@
+{
+  // el pequeño networker — Worker de solo assets estáticos (sin código de servidor)
+  // sirve index.html + css/js/sw/iconos directamente desde la raíz del repo.
+  "name": "networking",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "./"
+  }
+}
