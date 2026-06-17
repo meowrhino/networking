@@ -1,13 +1,13 @@
 /* ============================================================
-   el pequeño networker — lógica · v5
-   carrete de 4 secciones (fundido) · menú = una palabra ·
-   contactos / frases / sellos son contadores que tú sumas.
+   el pequeño networker — lógica · v6
+   carrete de 4 secciones (fundido) · menú-ruleta ·
+   datos guardados POR DÍA + panel de admin en el modal.
    ============================================================ */
 
 'use strict';
 
 const EVENT = EVENT_SONAR;
-const KEY = 'epn_state_v5';
+const KEY = 'epn_state_v6';
 const VOLUME = 0.16;
 const PAGES = ['hablar', 'contactos', 'frases', 'tarjetas'];
 
@@ -19,29 +19,52 @@ const FRASES = [
   { group: EVENT.servilleta.title, items: EVENT.servilleta.steps.map((t, i) => ({ k: 'serv' + i, t })) },
 ];
 
-/* ---------- estado ---------- */
-function defaultState() {
+/* ---------- estado (uno por día) ---------- */
+function dayState() {
   return {
-    version: 5,
-    eventId: EVENT.id,
     thread: null,
     convos: 0,
     contactCounts: { general: 0, cliente: 0, colab: 0 },
     fraseCounts: {},
     cardsGiven: 0,
-    muted: false,
   };
+}
+function defaultState() {
+  const days = {};
+  EVENT.days.forEach(d => { days[d.id] = dayState(); });
+  return { version: 6, eventId: EVENT.id, activeDayOverride: null, days, muted: false };
 }
 function loadState() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { const s = JSON.parse(raw); if (s && s.version === 5 && s.eventId === EVENT.id) return s; }
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && s.version === 6 && s.eventId === EVENT.id) {
+        EVENT.days.forEach(d => { if (!s.days[d.id]) s.days[d.id] = dayState(); });  // por si añades días
+        return s;
+      }
+    }
   } catch (e) { console.warn('estado ilegible:', e); }
   return defaultState();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { console.warn('no se pudo guardar:', e); } }
 let state = loadState();
 window.__resetCampaign = function () { state = defaultState(); save(); location.reload(); };
+
+/* ---------- qué día está activo ---------- */
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+// el día rueda a las EVENT.dayCutoffHour: antes de esa hora cuenta como el día anterior
+function autoDayId() {
+  const shifted = new Date(Date.now() - EVENT.dayCutoffHour * 3600 * 1000);
+  const key = ymd(shifted);
+  const ids = EVENT.days.map(d => d.id);
+  if (ids.includes(key)) return key;
+  return key < ids[0] ? ids[0] : ids[ids.length - 1];   // fuera del rango → primer/último día
+}
+function activeDayId() { return state.activeDayOverride || autoDayId(); }
+function dayLabel(id) { const d = EVENT.days.find(x => x.id === id); return d ? d.label : id; }
+function day() { return state.days[activeDayId()]; }
 
 let page = 0;
 
@@ -146,52 +169,90 @@ window.addEventListener('resize', () => centerNavItem(page));
 /* ============================================================
    ACCIONES
    ============================================================ */
-// conversación
-function startConvo() { if (state.thread) return; state.thread = { step: 1, tipo: null, used: [] }; sfx.step(); commit(); }
-function advanceConvo() { const th = state.thread; if (!th) return; const prev = EVENT.pasos[th.step - 1]; th.step++; sfx.step(); nudge(`${prev.name} · hecho`); commit(); }
-function useOpener(i) { const th = state.thread; if (!th) return; if (!th.used.includes(i)) { th.used.push(i); sfx.tick(); commit(); } }
+// conversación (todo sobre el día activo)
+function startConvo() { const d = day(); if (d.thread) return; d.thread = { step: 1, tipo: null, used: [] }; sfx.step(); commit(); }
+function advanceConvo() { const th = day().thread; if (!th) return; const prev = EVENT.pasos[th.step - 1]; th.step++; sfx.step(); nudge(`${prev.name} · hecho`); commit(); }
+function useOpener(i) { const th = day().thread; if (!th) return; if (!th.used.includes(i)) { th.used.push(i); sfx.tick(); commit(); } }
 // clasificar guarda el contacto en su contador (3/4 → contactos)
-function classify(tipo) { const th = state.thread; if (!th) return; th.tipo = tipo; th.step = 4; state.contactCounts[tipo] = (state.contactCounts[tipo] || 0) + 1; sfx.add(); nudge(`+1 · ${EVENT.tipos[tipo].label}`); commit(); }
+function classify(tipo) { const d = day(); const th = d.thread; if (!th) return; th.tipo = tipo; th.step = 4; d.contactCounts[tipo] = (d.contactCounts[tipo] || 0) + 1; sfx.add(); nudge(`+1 · ${EVENT.tipos[tipo].label}`); commit(); }
 // cerrar siempre entrega una tarjeta (4/4 → tarjetas)
-function closeConvo() { const th = state.thread; if (!th) return; state.convos++; state.cardsGiven++; state.thread = null; sfx.done(); nudge('cerrada · +1 tarjeta entregada'); commit(); }
+function closeConvo() { const d = day(); if (!d.thread) return; d.convos++; d.cardsGiven++; d.thread = null; sfx.done(); nudge('cerrada · +1 tarjeta entregada'); commit(); }
 
 // contactos (3 contadores con − / +)
-function addContact(tipo) { state.contactCounts[tipo] = (state.contactCounts[tipo] || 0) + 1; sfx.add(); commit(); }
-function subContact(tipo) { state.contactCounts[tipo] = Math.max(0, (state.contactCounts[tipo] || 0) - 1); sfx.undo(); commit(); }
+function addContact(tipo) { const d = day(); d.contactCounts[tipo] = (d.contactCounts[tipo] || 0) + 1; sfx.add(); commit(); }
+function subContact(tipo) { const d = day(); d.contactCounts[tipo] = Math.max(0, (d.contactCounts[tipo] || 0) - 1); sfx.undo(); commit(); }
 
 // frases (cada línea suma; mantener pulsado resta)
-function useFrase(k) { state.fraseCounts[k] = (state.fraseCounts[k] || 0) + 1; sfx.tick(); commit(); }
+function useFrase(k) { const d = day(); d.fraseCounts[k] = (d.fraseCounts[k] || 0) + 1; sfx.tick(); commit(); }
 
 // tarjetas (− / +)
-function giveCard() { state.cardsGiven++; sfx.add(); commit(); }
-function subCard() { state.cardsGiven = Math.max(0, state.cardsGiven - 1); sfx.undo(); commit(); }
+function giveCard() { day().cardsGiven++; sfx.add(); commit(); }
+function subCard() { const d = day(); d.cardsGiven = Math.max(0, d.cardsGiven - 1); sfx.undo(); commit(); }
 
-// modal (misión + sonido)
-function openModal() { renderMission(); document.getElementById('modal').hidden = false; }
+// modal (misión + sonido + admin)
+function openModal() { renderModal(); document.getElementById('modal').hidden = false; }
 function closeModal() { document.getElementById('modal').hidden = true; }
 function toggleMute() { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : VOLUME; document.getElementById('mute').textContent = state.muted ? 'sonido off' : 'sonido on'; save(); }
+
+// admin: cambiar de día, resetear
+function setDay(id) { state.activeDayOverride = id; save(); render(); renderModal(); }
+function autoDay() { state.activeDayOverride = null; save(); render(); renderModal(); }
+function resetDay() {
+  const id = activeDayId();
+  if (!confirm(`¿borrar los datos de ${dayLabel(id)}?`)) return;
+  state.days[id] = dayState(); save(); render(); renderModal();
+}
+function resetAll() {
+  if (!confirm('¿borrar TODOS los datos de todos los días?')) return;
+  state = defaultState(); save(); render(); renderModal();
+}
 
 /* ============================================================
    RENDER
    ============================================================ */
+function renderDayLabel() {
+  const el = document.getElementById('evDay');
+  el.textContent = '· ' + dayLabel(activeDayId()) + (state.activeDayOverride ? ' (fijado)' : '');
+}
 function renderMission() {
   document.getElementById('mission').innerHTML =
     `<p class="m-title">${EVENT.name}</p>` + EVENT.mission.map(l => `<p>${l}</p>`).join('');
 }
+function dayTotals(d) {
+  const cc = d.contactCounts;
+  return (cc.general + cc.cliente + cc.colab) + 'c · ' + d.cardsGiven + 't · ' + d.convos + ' charlas';
+}
+function renderAdmin() {
+  const auto = autoDayId();
+  const active = activeDayId();
+  const dayBtns = `<button class="adm-day ${!state.activeDayOverride ? 'on' : ''}" data-action="autoday">auto</button>` +
+    EVENT.days.map(d => `<button class="adm-day ${state.activeDayOverride === d.id ? 'on' : ''}" data-action="setday" data-day="${d.id}">${d.label}${d.id === auto ? ' ·' : ''}</button>`).join('');
+  const list = EVENT.days.map(d => `<p class="adm-row ${d.id === active ? 'on' : ''}"><span>${d.label}</span><span class="mono">${dayTotals(state.days[d.id])}</span></p>`).join('');
+  document.getElementById('admin').innerHTML = `
+    <p class="adm-h">día activo · editas el que elijas aquí</p>
+    <div class="adm-days">${dayBtns}</div>
+    <div class="adm-list">${list}</div>
+    <div class="adm-actions">
+      <button class="adm-reset" data-action="resetday">borrar este día</button>
+      <button class="adm-reset" data-action="resetall">borrar todo</button>
+    </div>`;
+}
+function renderModal() { renderMission(); renderAdmin(); }
 function render() {
   document.getElementById('mute').textContent = state.muted ? 'sonido off' : 'sonido on';
+  renderDayLabel();
   renderConvo(); renderContactos(); renderFrases(); renderTarjetas();
 }
 
 function renderConvo() {
-  const el = document.getElementById('convo'); const th = state.thread;
+  const el = document.getElementById('convo'); const d = day(); const th = d.thread;
   if (!th) {
     el.className = '';
     el.innerHTML = `
       <p class="kicker">hablar · cuando veas a alguien</p>
       <p class="desc">empieza una conversación. te llevo paso a paso. con calma.</p>
       <div class="row"><button class="btn primary" data-action="start">empezar una conversación</button></div>
-      <p class="note">conversaciones hasta ahora: <span class="mono">${state.convos}</span></p>`;
+      <p class="note">conversaciones hoy: <span class="mono">${d.convos}</span></p>`;
     return;
   }
   const s = EVENT.pasos[th.step - 1];
@@ -211,7 +272,7 @@ function renderConvo() {
 }
 
 function renderContactos() {
-  const cc = state.contactCounts;
+  const cc = day().contactCounts;
   const total = cc.general + cc.cliente + cc.colab;
   const items = Object.entries(EVENT.tipos).map(([id, t]) => {
     const n = cc[id] || 0;
@@ -229,11 +290,12 @@ function renderContactos() {
 }
 
 function renderFrases() {
+  const fc = day().fraseCounts;
   const groups = FRASES.map(g => `
     <div class="fgroup">
       <h3>${g.group}</h3>
       ${g.items.map(it => {
-        const n = state.fraseCounts[it.k] || 0;
+        const n = fc[it.k] || 0;
         return `<div class="fbtn ${n > 0 ? 'has' : ''}" data-action="frase" data-k="${it.k}">
           <span class="ftext">«${it.t}»</span><span class="fnum">×${n}</span>
         </div>`;
@@ -243,7 +305,7 @@ function renderFrases() {
 }
 
 function renderTarjetas() {
-  const n = state.cardsGiven;
+  const n = day().cardsGiven;
   document.getElementById('tarjetas').innerHTML = `
     <div class="csteps">
       <div class="cstep ${n > 0 ? 'has' : ''}">
@@ -260,7 +322,7 @@ function renderTarjetas() {
 // restar 1 en frases (mantener pulsado) · nunca baja de 0
 // (contactos y tarjetas ya tienen su botón − explícito)
 const DEC = {
-  frase: b => { const k = b.dataset.k; state.fraseCounts[k] = Math.max(0, (state.fraseCounts[k] || 0) - 1); },
+  frase: b => { const k = b.dataset.k; const d = day(); d.fraseCounts[k] = Math.max(0, (d.fraseCounts[k] || 0) - 1); },
 };
 
 /* ============================================================
@@ -303,6 +365,10 @@ document.addEventListener('click', (e) => {
     case 'openmodal':  openModal(); break;
     case 'closemodal': closeModal(); break;
     case 'mute':       toggleMute(); break;
+    case 'setday':     setDay(btn.dataset.day); break;
+    case 'autoday':    autoDay(); break;
+    case 'resetday':   resetDay(); break;
+    case 'resetall':   resetAll(); break;
   }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
@@ -310,7 +376,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal
 /* ---------- arranque ---------- */
 buildNav();
 applyPage(0, false);
-renderMission();
+renderModal();
 render();
 requestAnimationFrame(() => centerNavItem(0));
 

@@ -5,11 +5,20 @@
 const EVENT_SONAR = {
   id: 'sonar-2026',
   name: 'sónar+d 2026',
-  when: '18–19 juny · llotja de mar',
+  when: '18–20 juny · llotja de mar',
+
+  // días del evento (cada uno guarda sus propios datos). editable para futuros eventos.
+  days: [
+    { id: '2026-06-18', label: 'jue 18' },
+    { id: '2026-06-19', label: 'vie 19' },
+    { id: '2026-06-20', label: 'sáb 20' },
+  ],
+  // a qué hora "cambia el día": antes de esta hora (incl. madrugada) cuenta como el día anterior
+  dayCutoffHour: 10,
 
   // lo que se ve en el modal al tocar el título (2–3 líneas de misión)
   mission: [
-    '18–19 juny · llotja de mar.',
+    '18–20 juny · llotja de mar.',
     'hoy toca hablar con gente. cada conversación cuenta; no hace falta que salga bien.',
     'el objetivo: una conexión que de verdad merezca la pena.',
   ],

@@ -56,6 +56,22 @@ body::after {
 .modal-sound button { font: inherit; font-size: .92rem; text-transform: lowercase; background: transparent; border: 1px solid var(--hair); border-radius: 11px; color: var(--parch); padding: 9px 20px; cursor: pointer; transition: border-color .15s, color .15s; }
 .modal-sound button:hover { border-color: var(--ember); color: var(--ember); }
 
+/* ---------- etiqueta del día activo + panel de admin ---------- */
+.topquiet .ev-day { color: var(--fog-dim); }
+.admin { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--hair); text-align: center; }
+.adm-h { font-size: .72rem; color: var(--fog); letter-spacing: .06em; margin: 0 0 10px; }
+.adm-days { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.adm-day { font: inherit; font-size: .82rem; text-transform: lowercase; background: transparent; border: 1px solid var(--hair); border-radius: 9px; color: var(--fog); padding: 6px 12px; cursor: pointer; transition: border-color .15s, color .15s; }
+.adm-day:hover { color: var(--parch); }
+.adm-day.on { border-color: var(--ember); color: var(--ember); }
+.adm-list { margin: 16px 0 0; }
+.adm-row { display: flex; justify-content: space-between; gap: 12px; font-size: .82rem; color: var(--fog-dim); margin: 5px 0; }
+.adm-row.on { color: var(--parch); }
+.adm-row .mono { font-size: .72rem; }
+.adm-actions { display: flex; justify-content: center; gap: 18px; margin-top: 18px; }
+.adm-reset { font: inherit; font-size: .78rem; text-transform: lowercase; background: transparent; border: 0; color: var(--fog-dim); cursor: pointer; text-decoration: underline; text-decoration-color: var(--hair); text-underline-offset: 4px; }
+.adm-reset:hover { color: var(--ember); }
+
 /* ---------- carrete: páginas apiladas, fundido ---------- */
 .viewport { flex: 1 1 auto; position: relative; overflow: hidden; }
 .page {
