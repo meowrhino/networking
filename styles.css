@@ -49,11 +49,15 @@ body::after {
 .page {
   position: absolute; inset: 0;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 14px 20px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: safe center;
+  padding: 28px 22px;
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .4s ease, visibility .4s;
 }
 .page.active { opacity: 1; visibility: visible; pointer-events: auto; }
+/* el contenido vive en una columna estrecha, centrada en ambos ejes */
+.page > div { width: 100%; max-width: 25rem; }
 
 /* ---------- menú arrastrable (estilo pol roig) ---------- */
 .navbar {
@@ -74,9 +78,10 @@ body::after {
   font: inherit; font-size: 1.15rem; font-weight: 600; text-transform: lowercase;
   background: transparent; border: 0; cursor: pointer;
   color: var(--fog-dim); opacity: .5;
-  transition: color .3s, opacity .3s, transform .3s;
+  transform-origin: center;
+  transition: color .3s; /* el escalado/opacidad lo conduce el scroll (ruleta) */
 }
-.navitem.active { color: var(--ember); opacity: 1; transform: scale(1.12); }
+.navitem.active { color: var(--ember); }
 /* difumina los lados para que destaque el del centro */
 .navrail-mask {
   position: absolute; inset: 0; pointer-events: none;
@@ -84,20 +89,19 @@ body::after {
 }
 
 /* ---------- texto base ---------- */
-.kicker { font-size: .72rem; color: var(--fog); letter-spacing: .08em; margin: 0 0 8px; }
-.note { font-size: .84rem; color: var(--fog); margin: 12px 0 0; line-height: 1.5; }
-.desc { margin: 8px 0 0; }
+.kicker { font-size: .72rem; color: var(--fog); letter-spacing: .08em; margin: 0 0 8px; text-align: center; }
+.note { font-size: .84rem; color: var(--fog); margin: 16px 0 0; line-height: 1.5; text-align: center; }
+.desc { margin: 8px 0 0; text-align: center; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: none; }
 .block { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--hair); }
 .line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 
-/* ---------- botones ---------- */
-.btn { font: inherit; font-size: .92rem; text-transform: lowercase; background: transparent; color: var(--parch); border: 1px solid var(--hair); border-radius: 11px; padding: 11px 16px; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
-.btn:hover { border-color: var(--ember); color: var(--ember); }
-.btn:active { background: rgba(232, 115, 44, .08); }
-.btn.primary { border-color: var(--ember); color: var(--ember); }
-.btn.primary:hover { background: rgba(232, 115, 44, .12); }
-.row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+/* ---------- "botones" que no parecen botones (texto, subrayado fino) ---------- */
+.btn { font: inherit; font-size: 1rem; text-transform: lowercase; background: transparent; color: var(--parch); border: 0; padding: 6px 2px; cursor: pointer; text-decoration: underline; text-decoration-color: var(--hair); text-decoration-thickness: 1px; text-underline-offset: 6px; transition: color .15s, text-decoration-color .15s; }
+.btn:hover { color: var(--ember); text-decoration-color: var(--ember); }
+.btn:active { color: var(--ember); }
+.btn.primary { color: var(--ember); font-size: 1.18rem; text-decoration-color: var(--ember); }
+.row { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-top: 18px; justify-content: center; }
 
 /* ---------- contador grande tap-to-add (.counter) ---------- */
 .counters { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
@@ -117,7 +121,7 @@ body::after {
 .counter.small .cnum { font-size: 1.4rem; }
 
 /* ---------- conversación ---------- */
-.step-head { display: flex; align-items: baseline; gap: 10px; }
+.step-head { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
 .step-n { font-family: ui-monospace, monospace; text-transform: none; color: var(--ember); font-size: .8rem; }
 .step-name { font-size: 1.25rem; font-weight: 600; }
 .scanning { cursor: crosshair; }

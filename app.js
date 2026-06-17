@@ -70,6 +70,7 @@ const sfx = {
   add() { tone(560, 0.09, 'triangle'); tone(740, 0.09, 'triangle', 0.05); },
   step() { tone(540, 0.10, 'triangle'); },
   done() { [523.25, 659.25, 783.99].forEach((f, i) => tone(f, 0.12, 'triangle', i * 0.06)); },
+  undo() { tone(380, 0.08, 'sine'); tone(280, 0.10, 'sine', 0.05); },
 };
 
 /* ---------- avisos ---------- */
@@ -101,10 +102,24 @@ function centerNavItem(i) {
   // instantáneo: con scroll-snap-stop:always el scroll suave se atasca en el 1er anclaje
   railLock = true; clearTimeout(lockTimer);
   navrail.scrollTo({ left: it.offsetLeft + it.offsetWidth / 2 - navrail.clientWidth / 2, behavior: 'auto' });
+  updateRail();
   lockTimer = setTimeout(() => { railLock = false; }, 150);
 }
+// ruleta: cada palabra escala y se desvanece según lo cerca que esté del centro
+function updateRail() {
+  const center = navrail.scrollLeft + navrail.clientWidth / 2;
+  const reach = navrail.clientWidth * 0.5;
+  navrail.querySelectorAll('.navitem').forEach((it) => {
+    const c = it.offsetLeft + it.offsetWidth / 2;
+    const t = Math.min(Math.abs(c - center) / reach, 1);   // 0 centro · 1 borde
+    it.style.transform = `scale(${(1.22 - t * 0.5).toFixed(3)})`;
+    it.style.opacity = (1 - t * 0.62).toFixed(3);
+  });
+}
 // al arrastrar el menú y soltar, navega a la sección que quede centrada
+let railRaf = null;
 navrail.addEventListener('scroll', () => {
+  if (railRaf == null) railRaf = requestAnimationFrame(() => { railRaf = null; updateRail(); });
   if (railLock) return;
   clearTimeout(settleTimer);
   settleTimer = setTimeout(() => {
@@ -117,6 +132,7 @@ navrail.addEventListener('scroll', () => {
     if (best !== page) { applyPage(best, false); ensureAudio(); sfx.tick(); }
   }, 110);
 }, { passive: true });
+window.addEventListener('resize', () => centerNavItem(page));
 
 // swipe en el contenido también cambia de sección (y centra el menú)
 (function enableSwipe() {
@@ -200,7 +216,7 @@ function renderContactos() {
       <span class="ftext">${t.label}</span><span class="fnum">×${n}</span></div>`;
   }).join('');
   document.getElementById('contactos').innerHTML = `
-    <p class="kicker">contactos · toca para sumar</p>
+    <p class="kicker">contactos · toca suma · mantén resta</p>
     <div class="flist">${items}</div>
     <p class="note">total: <span class="mono">${total}</span></p>`;
 }
@@ -216,7 +232,7 @@ function renderFrases() {
         </div>`;
       }).join('')}
     </div>`).join('');
-  document.getElementById('frases').innerHTML = `<p class="kicker">frases · tócalas al usarlas</p>${groups}`;
+  document.getElementById('frases').innerHTML = `<p class="kicker">frases · toca al usarlas · mantén resta</p>${groups}`;
 }
 
 function renderTarjetas() {
@@ -226,7 +242,7 @@ function renderTarjetas() {
       <span class="ftext stamp">${s.text}</span><span class="fnum">×${n}</span></div>`;
   }).join('');
   document.getElementById('tarjetas').innerHTML = `
-    <p class="kicker">tarjetas · toca para sumar</p>
+    <p class="kicker">tarjetas · toca suma · mantén resta</p>
     <div class="flist">
       <div class="fbtn lg ${state.cardsGiven > 0 ? 'has' : ''}" data-action="givecard">
         <span class="ftext">tarjetas entregadas</span><span class="fnum">×${state.cardsGiven}</span></div>
@@ -239,10 +255,37 @@ function renderTarjetas() {
     </div>`;
 }
 
+// restar 1 (mantener pulsado) · nunca baja de 0
+const DEC = {
+  addcontact: b => { const t = b.dataset.t; state.contactCounts[t] = Math.max(0, (state.contactCounts[t] || 0) - 1); },
+  frase:      b => { const k = b.dataset.k; state.fraseCounts[k] = Math.max(0, (state.fraseCounts[k] || 0) - 1); },
+  givecard:   () => { state.cardsGiven = Math.max(0, state.cardsGiven - 1); },
+  makecard:   () => { state.cardsMade  = Math.max(0, state.cardsMade  - 1); },
+  skin:       b => { const id = b.dataset.id; state.skin[id] = Math.max(0, (state.skin[id] || 0) - 1); },
+};
+
 /* ============================================================
    EVENTOS
    ============================================================ */
+// mantener pulsado un contador resta 1 (corrige el toque accidental)
+let pressTimer = null, longFired = false, px = 0, py = 0;
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('[data-action]');
+  if (!b || !DEC[b.dataset.action]) return;
+  px = e.clientX; py = e.clientY; longFired = false;
+  pressTimer = setTimeout(() => {
+    longFired = true;
+    ensureAudio(); DEC[b.dataset.action](b); sfx.undo(); nudge('−1'); commit();
+    if (navigator.vibrate) navigator.vibrate(15);
+  }, 500);
+});
+document.addEventListener('pointermove', (e) => {
+  if (pressTimer && (Math.abs(e.clientX - px) > 10 || Math.abs(e.clientY - py) > 10)) { clearTimeout(pressTimer); pressTimer = null; }
+});
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => { clearTimeout(pressTimer); pressTimer = null; }));
+
 document.addEventListener('click', (e) => {
+  if (longFired) { longFired = false; return; }   // fue un mantener-pulsado, no sumes
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   ensureAudio();
@@ -270,3 +313,8 @@ buildNav();
 applyPage(0, false);
 render();
 requestAnimationFrame(() => centerNavItem(0));
+
+/* ---------- pwa: funciona offline y se añade a la pantalla de inicio ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
