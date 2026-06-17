@@ -5,5 +5,9 @@
   "compatibility_date": "2026-06-01",
   "assets": {
     "directory": "./"
-  }
+  },
+  // dominio personalizado: al desplegar, Cloudflare crea el DNS + certificado automáticamente
+  "routes": [
+    { "pattern": "networking.meowrhino.studio", "custom_domain": true }
+  ]
 }

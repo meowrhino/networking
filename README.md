@@ -7,8 +7,9 @@ contenido cruza en **fundido**.
 
 hecha a mano en html/css/js, sin frameworks, sin build, sin servidor. el contenido va **centrado**
 (vertical y horizontal) y los "botones" son texto, no cajas. todo el progreso vive en el navegador
-(`localStorage`). es una **pwa**: se añade a la pantalla de inicio y funciona **offline**. en vivo:
-**https://meowrhino.github.io/networking/**
+(`localStorage`). es una **pwa**: se añade a la pantalla de inicio y funciona **offline**.
+en vivo: **https://networking.meowrhino.studio** (Cloudflare Worker de assets) ·
+respaldo: **https://meowrhino.github.io/networking/** (GitHub Pages)
 
 ## las 4 secciones
 

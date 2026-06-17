@@ -1,4 +1,9 @@
-# no servir: config, dev y notas privadas (gitignore no afecta a wrangler en deploys locales)
+# no servir: control de versiones, caché de wrangler, config, dev y notas privadas
+# (gitignore no afecta a wrangler; aquí hay que listarlo todo explícitamente)
+.git
+.wrangler
+node_modules
+.DS_Store
 wrangler.jsonc
 .assetsignore
 .gitignore
