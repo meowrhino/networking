@@ -33,16 +33,28 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ---------- línea superior ---------- */
+/* ---------- línea superior: solo el título, centrado y clicable ---------- */
 .topquiet {
   flex: 0 0 auto;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 20px; font-size: .72rem; color: var(--fog);
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 20px;
 }
-.topquiet .ctrls { display: flex; gap: 4px; }
-.topquiet button { font: inherit; font-size: .72rem; background: transparent; border: 0; color: var(--fog); cursor: pointer; padding: 4px 7px; border-radius: 6px; }
-.topquiet button:hover { color: var(--parch); }
-.topquiet button:active { color: var(--ember); }
+.topquiet .ev { font: inherit; font-size: .82rem; letter-spacing: .1em; text-transform: lowercase; background: transparent; border: 0; color: var(--fog); cursor: pointer; padding: 4px 10px; }
+.topquiet .ev:hover { color: var(--parch); }
+.topquiet .ev:active { color: var(--ember); }
+
+/* ---------- modal (misión + sonido) ---------- */
+.modal[hidden] { display: none; }
+.modal { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.modal-bg { position: absolute; inset: 0; background: rgba(10, 9, 7, .72); }
+.modal-card { position: relative; width: 100%; max-width: 22rem; background: var(--humus-2); border: 1px solid var(--hair); border-radius: 16px; padding: 30px 24px 24px; text-align: center; }
+.modal-x { position: absolute; top: 10px; right: 12px; font: inherit; font-size: .72rem; background: transparent; border: 0; color: var(--fog); cursor: pointer; }
+.modal-x:hover { color: var(--parch); }
+.mission p { margin: 0 0 12px; line-height: 1.5; }
+.mission .m-title { color: var(--ember); font-size: 1.2rem; font-weight: 600; margin-bottom: 14px; }
+.modal-sound { margin-top: 6px; padding-top: 18px; border-top: 1px solid var(--hair); }
+.modal-sound button { font: inherit; font-size: .92rem; text-transform: lowercase; background: transparent; border: 1px solid var(--hair); border-radius: 11px; color: var(--parch); padding: 9px 20px; cursor: pointer; transition: border-color .15s, color .15s; }
+.modal-sound button:hover { border-color: var(--ember); color: var(--ember); }
 
 /* ---------- carrete: páginas apiladas, fundido ---------- */
 .viewport { flex: 1 1 auto; position: relative; overflow: hidden; }
@@ -103,33 +115,34 @@ body::after {
 .btn.primary { color: var(--ember); font-size: 1.18rem; text-decoration-color: var(--ember); }
 .row { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-top: 18px; justify-content: center; }
 
-/* ---------- contador grande tap-to-add (.counter) ---------- */
-.counters { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
-.counter {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  border: 1px solid var(--hair); border-radius: 14px; padding: 14px 18px;
-  cursor: pointer; user-select: none; transition: border-color .15s, background .12s;
+/* ---------- contador estilo carrito (− n +), centrado ---------- */
+.csteps { display: flex; flex-direction: column; gap: 26px; align-items: center; }
+.cstep { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.cstep-label { font-size: 1.1rem; text-align: center; }
+.cstep-ctrl { display: flex; align-items: center; gap: 20px; }
+.cstep-btn {
+  font: inherit; font-size: 1.5rem; line-height: 1;
+  width: 42px; height: 42px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--parch);
+  border: 1px solid var(--hair); border-radius: 50%; cursor: pointer;
+  transition: border-color .15s, color .15s, background .12s;
 }
-.counter:hover { border-color: var(--ember); }
-.counter:active { background: rgba(232, 115, 44, .08); }
-.counter .clabel { font-size: 1.05rem; }
-.counter .csub { font-size: .72rem; color: var(--fog); }
-.counter .cnum { font-family: ui-monospace, monospace; font-size: 1.9rem; line-height: 1; color: var(--fog); flex: 0 0 auto; }
-.counter.has .cnum { color: var(--ember); }
-.counter.small { padding: 11px 16px; }
-.counter.small .clabel { font-size: .95rem; }
-.counter.small .cnum { font-size: 1.4rem; }
+.cstep-btn:hover { border-color: var(--ember); color: var(--ember); }
+.cstep-btn:active { background: rgba(232, 115, 44, .1); }
+.cstep-n { font-family: ui-monospace, monospace; font-size: 2rem; line-height: 1; min-width: 1.6em; text-align: center; color: var(--fog); }
+.cstep.has .cstep-n { color: var(--ember); }
 
 /* ---------- conversación ---------- */
 .step-head { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
 .step-n { font-family: ui-monospace, monospace; text-transform: none; color: var(--ember); font-size: .8rem; }
 .step-name { font-size: 1.25rem; font-weight: 600; }
 .scanning { cursor: crosshair; }
-.pitch-box { color: var(--fog); font-size: .9rem; margin: 12px 0 0; border-left: 2px solid var(--hair); padding-left: 12px; }
-.ammo { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.ammo li { border-left: 2px solid var(--hair); padding: 4px 0 4px 12px; color: var(--parch); cursor: pointer; transition: border-color .15s, color .15s; }
-.ammo li:hover { border-color: var(--ember); color: var(--ember); }
-.ammo li.used { color: var(--garden); border-color: var(--garden); }
+.pitch-box { color: var(--parch); font-size: .95rem; margin: 16px auto 0; max-width: 22rem; text-align: center; border-top: 1px solid var(--hair); padding-top: 14px; }
+.ammo { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ammo li { text-align: center; padding: 4px 8px; color: var(--parch); cursor: pointer; transition: color .15s; }
+.ammo li:hover { color: var(--ember); }
+.ammo li.used { color: var(--garden); }
 
 /* ---------- frases (líneas pinchables con contador) ---------- */
 .fgroup { margin-top: 18px; }

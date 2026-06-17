@@ -22,12 +22,7 @@
 </head>
 <body>
   <div class="topquiet">
-    <span class="ev" id="ev">sónar+d 2026</span>
-    <span class="ctrls">
-      <button data-action="textdown" aria-label="texto más pequeño">a−</button>
-      <button data-action="textup" aria-label="texto más grande">a+</button>
-      <button data-action="mute" id="mute" aria-label="silenciar">son.</button>
-    </span>
+    <button class="ev" id="evBtn" data-action="openmodal" aria-haspopup="dialog">sónar+d 2026</button>
   </div>
 
   <!-- las 4 secciones se cruzan con fundido (carrete) -->
@@ -45,6 +40,18 @@
   </nav>
 
   <div class="turnins" id="turnins" aria-live="polite"></div>
+
+  <!-- modal: misión + sonido (se abre al tocar el título) -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-bg" data-action="closemodal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="sónar+d 2026">
+      <button class="modal-x" data-action="closemodal" aria-label="cerrar">cerrar</button>
+      <div class="mission" id="mission"></div>
+      <div class="modal-sound">
+        <button data-action="mute" id="mute" aria-label="sonido">sonido on</button>
+      </div>
+    </div>
+  </div>
 
   <script src="events/sonar.js"></script>
   <script src="app.js"></script>

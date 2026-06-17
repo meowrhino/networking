@@ -7,6 +7,13 @@ const EVENT_SONAR = {
   name: 'sónar+d 2026',
   when: '18–19 juny · llotja de mar',
 
+  // lo que se ve en el modal al tocar el título (2–3 líneas de misión)
+  mission: [
+    '18–19 juny · llotja de mar.',
+    'hoy toca hablar con gente. cada conversación cuenta; no hace falta que salga bien.',
+    'el objetivo: una conexión que de verdad merezca la pena.',
+  ],
+
   // tipos de contacto (botones-contador en la pestaña "contactos")
   tipos: {
     general: { label: 'contacto general',       tone: 'fog' },
@@ -24,7 +31,7 @@ const EVENT_SONAR = {
       desc: 'saluda y suelta una. la primera es la tuya:',
       openers: [
         'hola, soy manu y hago webs. ¿cómo te llamas? ¿qué haces por aquí?',
-        '¿esto que miras es a medida o usaron algo ya hecho?',
+        '¿quieres una web?',
         '¿café o cortado? (y de ahí, lo que salga)',
         'esa pregunta que has hecho ha estado buena',
       ],
@@ -44,8 +51,9 @@ const EVENT_SONAR = {
   ],
 
   pitch:
-    'hago webs a mano, a medida, para que dejes de pagar wix o squarespace ' +
-    'y tengas algo acabado y con carácter. busco gente que quiera una web que se sienta suya.',
+    'hago webs desde cero contigo, para que no pagues cuotas ni a wix ni a squarespace ni a nadie. ' +
+    'te enseño cómo funciona el código para que la mantengas tú si quieres; ' +
+    'y si no, tengo una tarifa estándar para cuando quieras actualizarla.',
 
   // chuleta de venta (pestaña "frases" — cada línea es un botón que cuenta)
   servilleta: {
@@ -57,13 +65,4 @@ const EVENT_SONAR = {
       '«en dos años ya pagaste tres webs mías»',
     ],
   },
-
-  // los 5 sellos reales (pestaña "tarjetas" → estampados en piel)
-  sellos: [
-    { id: 'web',    text: '¿quieres una web?' },
-    { id: 'studio', text: 'meowrhino.studio' },
-    { id: 'nubeL',  text: '☁ nube grande' },
-    { id: 'nubeM',  text: '☁ nube mediana' },
-    { id: 'nubeS',  text: '☁ nube pequeña' },
-  ],
 };

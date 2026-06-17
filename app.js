@@ -29,10 +29,7 @@ function defaultState() {
     contactCounts: { general: 0, cliente: 0, colab: 0 },
     fraseCounts: {},
     cardsGiven: 0,
-    cardsMade: 0,
-    skin: { web: 0, studio: 0, nubeL: 0, nubeM: 0, nubeS: 0 },
     muted: false,
-    fontStep: 0,
   };
 }
 function loadState() {
@@ -153,30 +150,36 @@ window.addEventListener('resize', () => centerNavItem(page));
 function startConvo() { if (state.thread) return; state.thread = { step: 1, tipo: null, used: [] }; sfx.step(); commit(); }
 function advanceConvo() { const th = state.thread; if (!th) return; const prev = EVENT.pasos[th.step - 1]; th.step++; sfx.step(); nudge(`${prev.name} · hecho`); commit(); }
 function useOpener(i) { const th = state.thread; if (!th) return; if (!th.used.includes(i)) { th.used.push(i); sfx.tick(); commit(); } }
-function classify(tipo) { const th = state.thread; if (!th) return; th.tipo = tipo; th.step = 4; sfx.step(); nudge(`${EVENT.tipos[tipo].label} · anótalo en contactos`); commit(); }
-function closeConvo() { const th = state.thread; if (!th) return; state.convos++; state.thread = null; sfx.done(); nudge('conversación cerrada · bien'); commit(); }
+// clasificar guarda el contacto en su contador (3/4 → contactos)
+function classify(tipo) { const th = state.thread; if (!th) return; th.tipo = tipo; th.step = 4; state.contactCounts[tipo] = (state.contactCounts[tipo] || 0) + 1; sfx.add(); nudge(`+1 · ${EVENT.tipos[tipo].label}`); commit(); }
+// cerrar siempre entrega una tarjeta (4/4 → tarjetas)
+function closeConvo() { const th = state.thread; if (!th) return; state.convos++; state.cardsGiven++; state.thread = null; sfx.done(); nudge('cerrada · +1 tarjeta entregada'); commit(); }
 
-// contactos (3 contadores)
+// contactos (3 contadores con − / +)
 function addContact(tipo) { state.contactCounts[tipo] = (state.contactCounts[tipo] || 0) + 1; sfx.add(); commit(); }
+function subContact(tipo) { state.contactCounts[tipo] = Math.max(0, (state.contactCounts[tipo] || 0) - 1); sfx.undo(); commit(); }
 
-// frases (cada línea suma)
+// frases (cada línea suma; mantener pulsado resta)
 function useFrase(k) { state.fraseCounts[k] = (state.fraseCounts[k] || 0) + 1; sfx.tick(); commit(); }
 
-// tarjetas
+// tarjetas (− / +)
 function giveCard() { state.cardsGiven++; sfx.add(); commit(); }
-function makeCard() { state.cardsMade++; sfx.add(); commit(); }
-function stampSkin(id) { state.skin[id] = (state.skin[id] || 0) + 1; sfx.add(); commit(); }
+function subCard() { state.cardsGiven = Math.max(0, state.cardsGiven - 1); sfx.undo(); commit(); }
 
-// ajustes
-function toggleMute() { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : VOLUME; document.getElementById('mute').textContent = state.muted ? 'mute' : 'son.'; save(); }
-function bumpFont(d) { state.fontStep = Math.max(-2, Math.min(3, state.fontStep + d)); applyFont(); save(); }
-function applyFont() { document.documentElement.style.setProperty('--fs', (1 + state.fontStep * 0.08).toFixed(2) + 'rem'); }
+// modal (misión + sonido)
+function openModal() { renderMission(); document.getElementById('modal').hidden = false; }
+function closeModal() { document.getElementById('modal').hidden = true; }
+function toggleMute() { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : VOLUME; document.getElementById('mute').textContent = state.muted ? 'sonido off' : 'sonido on'; save(); }
 
 /* ============================================================
    RENDER
    ============================================================ */
+function renderMission() {
+  document.getElementById('mission').innerHTML =
+    `<p class="m-title">${EVENT.name}</p>` + EVENT.mission.map(l => `<p>${l}</p>`).join('');
+}
 function render() {
-  document.getElementById('mute').textContent = state.muted ? 'mute' : 'son.';
+  document.getElementById('mute').textContent = state.muted ? 'sonido off' : 'sonido on';
   renderConvo(); renderContactos(); renderFrases(); renderTarjetas();
 }
 
@@ -212,12 +215,16 @@ function renderContactos() {
   const total = cc.general + cc.cliente + cc.colab;
   const items = Object.entries(EVENT.tipos).map(([id, t]) => {
     const n = cc[id] || 0;
-    return `<div class="fbtn lg ${n > 0 ? 'has' : ''}" data-action="addcontact" data-t="${id}">
-      <span class="ftext">${t.label}</span><span class="fnum">×${n}</span></div>`;
+    return `<div class="cstep ${n > 0 ? 'has' : ''}">
+      <span class="cstep-label">${t.label}</span>
+      <span class="cstep-ctrl">
+        <button class="cstep-btn" data-action="subcontact" data-t="${id}" aria-label="restar">−</button>
+        <span class="cstep-n">${n}</span>
+        <button class="cstep-btn" data-action="addcontact" data-t="${id}" aria-label="sumar">+</button>
+      </span></div>`;
   }).join('');
   document.getElementById('contactos').innerHTML = `
-    <p class="kicker">contactos · toca suma · mantén resta</p>
-    <div class="flist">${items}</div>
+    <div class="csteps">${items}</div>
     <p class="note">total: <span class="mono">${total}</span></p>`;
 }
 
@@ -232,36 +239,28 @@ function renderFrases() {
         </div>`;
       }).join('')}
     </div>`).join('');
-  document.getElementById('frases').innerHTML = `<p class="kicker">frases · toca al usarlas · mantén resta</p>${groups}`;
+  document.getElementById('frases').innerHTML = `<p class="kicker">frases · toca al usarlas (se cuentan) · mantén para restar</p>${groups}`;
 }
 
 function renderTarjetas() {
-  const skin = EVENT.sellos.map(s => {
-    const n = state.skin[s.id] || 0;
-    return `<div class="fbtn ${n > 0 ? 'has' : ''}" data-action="skin" data-id="${s.id}">
-      <span class="ftext stamp">${s.text}</span><span class="fnum">×${n}</span></div>`;
-  }).join('');
+  const n = state.cardsGiven;
   document.getElementById('tarjetas').innerHTML = `
-    <p class="kicker">tarjetas · toca suma · mantén resta</p>
-    <div class="flist">
-      <div class="fbtn lg ${state.cardsGiven > 0 ? 'has' : ''}" data-action="givecard">
-        <span class="ftext">tarjetas entregadas</span><span class="fnum">×${state.cardsGiven}</span></div>
-      <div class="fbtn lg ${state.cardsMade > 0 ? 'has' : ''}" data-action="makecard">
-        <span class="ftext">creadas y entregadas<span class="fsub">alguien se hizo la suya con tus sellos</span></span><span class="fnum">×${state.cardsMade}</span></div>
+    <div class="csteps">
+      <div class="cstep ${n > 0 ? 'has' : ''}">
+        <span class="cstep-label">tarjetas entregadas</span>
+        <span class="cstep-ctrl">
+          <button class="cstep-btn" data-action="subcard" aria-label="restar">−</button>
+          <span class="cstep-n">${n}</span>
+          <button class="cstep-btn" data-action="givecard" aria-label="sumar">+</button>
+        </span></div>
     </div>
-    <div class="block">
-      <p class="kicker">sellos estampados en piel</p>
-      <div class="flist">${skin}</div>
-    </div>`;
+    <p class="note">también suman solas al cerrar una conversación en «hablar».</p>`;
 }
 
-// restar 1 (mantener pulsado) · nunca baja de 0
+// restar 1 en frases (mantener pulsado) · nunca baja de 0
+// (contactos y tarjetas ya tienen su botón − explícito)
 const DEC = {
-  addcontact: b => { const t = b.dataset.t; state.contactCounts[t] = Math.max(0, (state.contactCounts[t] || 0) - 1); },
-  frase:      b => { const k = b.dataset.k; state.fraseCounts[k] = Math.max(0, (state.fraseCounts[k] || 0) - 1); },
-  givecard:   () => { state.cardsGiven = Math.max(0, state.cardsGiven - 1); },
-  makecard:   () => { state.cardsMade  = Math.max(0, state.cardsMade  - 1); },
-  skin:       b => { const id = b.dataset.id; state.skin[id] = Math.max(0, (state.skin[id] || 0) - 1); },
+  frase: b => { const k = b.dataset.k; state.fraseCounts[k] = Math.max(0, (state.fraseCounts[k] || 0) - 1); },
 };
 
 /* ============================================================
@@ -297,20 +296,21 @@ document.addEventListener('click', (e) => {
     case 'classify':   classify(btn.dataset.t); break;
     case 'close':      closeConvo(); break;
     case 'addcontact': addContact(btn.dataset.t); break;
+    case 'subcontact': subContact(btn.dataset.t); break;
     case 'frase':      useFrase(btn.dataset.k); break;
     case 'givecard':   giveCard(); break;
-    case 'makecard':   makeCard(); break;
-    case 'skin':       stampSkin(btn.dataset.id); break;
+    case 'subcard':    subCard(); break;
+    case 'openmodal':  openModal(); break;
+    case 'closemodal': closeModal(); break;
     case 'mute':       toggleMute(); break;
-    case 'textup':     bumpFont(+1); break;
-    case 'textdown':   bumpFont(-1); break;
   }
 });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 /* ---------- arranque ---------- */
-applyFont();
 buildNav();
 applyPage(0, false);
+renderMission();
 render();
 requestAnimationFrame(() => centerNavItem(0));
 
