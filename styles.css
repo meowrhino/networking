@@ -37,7 +37,8 @@ body::after {
 .topquiet {
   flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
-  padding: 14px 20px;
+  /* respeta el notch/barra de estado en la PWA a pantalla completa */
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
 }
 .topquiet .ev { font: inherit; font-size: .82rem; letter-spacing: .1em; text-transform: lowercase; background: transparent; border: 0; color: var(--fog); cursor: pointer; padding: 4px 10px; }
 .topquiet .ev:hover { color: var(--parch); }

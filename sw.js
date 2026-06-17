@@ -1,6 +1,6 @@
 /* el pequeño networker — service worker
    precachea el "app shell" y deja todo offline; las fuentes se guardan al vuelo */
-const CACHE = 'epn-v5-3';
+const CACHE = 'epn-v5-4';
 const SHELL = [
   './', 'index.html', 'styles.css', 'app.js', 'events/sonar.js',
   'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-180.png',
